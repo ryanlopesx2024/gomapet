@@ -2632,7 +2632,114 @@ window.addEventListener('DOMContentLoaded',async()=>{
       fetch(u).then(r=>r.json()).then(d=>{if(d.ok){META.lastData=d;applyMetaData(d);}}).catch(()=>{});
     },60000);
   }
+  await loadTeam(); await loadStock();
+  setInterval(()=>{loadTeam();loadStock();},15000);
 });
+
+/* ═══ TIME + ESTOQUE — CRUD via Supabase REST ═══════════════ */
+const SB_URL='https://xfgfalglgfamavemedew.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
+const sbHeaders=()=>({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'});
+
+async function sbReq(path,method='GET',body){
+  const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method,headers:sbHeaders(),body:body?JSON.stringify(body):undefined});
+  if(!r.ok) throw new Error(await r.text());
+  return r.status===204?null:await r.json();
+}
+
+async function loadTeam(){
+  try{
+    const rows=await sbReq('sales_team?select=*&order=revenue.desc');
+    D.team=rows.map(r=>({id:r.id,n:r.name,i:r.initials,s:r.sales,c:r.sales?Math.round(r.conversions/r.sales*100):0,r:Number(r.revenue),col:r.color,_conv:r.conversions}));
+    D.teamGoal=D.team.length?Math.max(20,Math.round(D.team.reduce((a,p)=>a+p.c,0)/D.team.length)):40;
+    if(document.querySelector('.nav.on')?.dataset.pg==='time') renderTime();
+  }catch(e){console.warn('loadTeam',e);}
+}
+async function loadStock(){
+  try{
+    const rows=await sbReq('stock_items?select=*&order=units.asc');
+    D.stock=rows.map(r=>({id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status}));
+    if(document.querySelector('.nav.on')?.dataset.pg==='estoque') renderEstoque();
+  }catch(e){console.warn('loadStock',e);}
+}
+
+function openTeamModal(id){
+  document.getElementById('teamOverlay').style.display='flex';
+  document.getElementById('teamModalTitle').textContent=id?'✏️ Editar Vendedor':'👤 Novo Vendedor';
+  ['teamId','teamName','teamInitials','teamSales','teamConv','teamRevenue'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('teamColor').value='#29B347';
+  document.getElementById('teamStatus').textContent='';
+  if(id){
+    const p=D.team.find(x=>x.id===id); if(!p)return;
+    document.getElementById('teamId').value=id;
+    document.getElementById('teamName').value=p.n;
+    document.getElementById('teamInitials').value=p.i;
+    document.getElementById('teamSales').value=p.s;
+    document.getElementById('teamConv').value=p._conv;
+    document.getElementById('teamRevenue').value=p.r;
+    document.getElementById('teamColor').value=p.col;
+  }
+}
+function closeTeamModal(){document.getElementById('teamOverlay').style.display='none';}
+function editTeam(id){openTeamModal(id);}
+async function deleteTeam(id){
+  if(!confirm('Excluir este vendedor?'))return;
+  try{await sbReq(`sales_team?id=eq.${id}`,'DELETE'); await loadTeam();}catch(e){alert('Erro: '+e.message);}
+}
+async function saveTeam(){
+  const id=document.getElementById('teamId').value;
+  const payload={
+    name:document.getElementById('teamName').value.trim(),
+    initials:document.getElementById('teamInitials').value.trim().toUpperCase(),
+    sales:parseInt(document.getElementById('teamSales').value)||0,
+    conversions:parseInt(document.getElementById('teamConv').value)||0,
+    revenue:parseFloat(document.getElementById('teamRevenue').value)||0,
+    color:document.getElementById('teamColor').value
+  };
+  if(!payload.name||!payload.initials){document.getElementById('teamStatus').textContent='Preencha nome e iniciais';return;}
+  try{
+    if(id) await sbReq(`sales_team?id=eq.${id}`,'PATCH',payload);
+    else await sbReq('sales_team','POST',payload);
+    await loadTeam(); closeTeamModal();
+  }catch(e){document.getElementById('teamStatus').textContent='Erro: '+e.message;}
+}
+
+function openStockModal(id){
+  document.getElementById('stockOverlay').style.display='flex';
+  document.getElementById('stockModalTitle').textContent=id?'✏️ Editar Item':'📦 Novo Item de Estoque';
+  ['stockId','stockName','stockUnits','stockDays'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('stockStatus').value='ok';
+  document.getElementById('stockStatus2').textContent='';
+  if(id){
+    const s=D.stock.find(x=>x.id===id); if(!s)return;
+    document.getElementById('stockId').value=id;
+    document.getElementById('stockName').value=s.n;
+    document.getElementById('stockUnits').value=s.u;
+    document.getElementById('stockDays').value=s.d;
+    document.getElementById('stockStatus').value=s.s;
+  }
+}
+function closeStockModal(){document.getElementById('stockOverlay').style.display='none';}
+function editStock(id){openStockModal(id);}
+async function deleteStock(id){
+  if(!confirm('Excluir este item?'))return;
+  try{await sbReq(`stock_items?id=eq.${id}`,'DELETE'); await loadStock();}catch(e){alert('Erro: '+e.message);}
+}
+async function saveStock(){
+  const id=document.getElementById('stockId').value;
+  const payload={
+    name:document.getElementById('stockName').value.trim(),
+    units:parseInt(document.getElementById('stockUnits').value)||0,
+    days_left:parseInt(document.getElementById('stockDays').value)||0,
+    status:document.getElementById('stockStatus').value
+  };
+  if(!payload.name){document.getElementById('stockStatus2').textContent='Preencha o nome';return;}
+  try{
+    if(id) await sbReq(`stock_items?id=eq.${id}`,'PATCH',payload);
+    else await sbReq('stock_items','POST',payload);
+    await loadStock(); closeStockModal();
+  }catch(e){document.getElementById('stockStatus2').textContent='Erro: '+e.message;}
+}
 </script>
 <script type="module" src="/src/main.tsx"></script></body>
 </html>
