@@ -2282,31 +2282,33 @@ function renderTime(){
 function renderEstoque(){
   const maxDays=60;
 
-  // Stock value KPIs
+  // Stock value KPIs (usa preços reais quando disponíveis)
   const svKpis=document.getElementById('stock-value-kpis');
-  if(svKpis&&!svKpis.children.length){
-    const prices={0:179*6,1:149*3,2:149,3:24};
+  if(svKpis){
+    const fallbackPrices={0:179*6,1:149*3,2:149,3:24};
     const totalUnits=D.stock.reduce((a,s)=>a+s.u,0);
-    const totalVal=D.stock.reduce((a,s,i)=>a+s.u*(prices[i]||100),0);
+    const totalCost=D.stock.reduce((a,s,i)=>a+s.u*(s.cost||0),0);
+    const totalSale=D.stock.reduce((a,s,i)=>a+s.u*(s.price||fallbackPrices[i]||100),0);
+    const potencialLucro=totalSale-totalCost;
     const critItems=D.stock.filter(s=>s.s==='crit').length;
     const warnItems=D.stock.filter(s=>s.s==='warn').length;
-    const minDays=Math.min(...D.stock.map(s=>Math.floor(s.u/s.d)));
+    const minDays=D.stock.length?Math.min(...D.stock.map(s=>Math.floor(s.u/(s.d||1)))):0;
+    const giroMedio=D.stock.length?D.stock.reduce((a,s)=>a+s.d,0)/D.stock.length:0;
     svKpis.innerHTML=`
       <div class="card card-p" style="border-left:3px solid var(--green)">
-        <div class="kc-lbl">Valor Total em Estoque</div><div class="kc-val">${fmtBRL(totalVal)}</div>
-        <div class="kc-sub pos">${fmtN(totalUnits)} unidades</div></div>
+        <div class="kc-lbl">Valor de Venda em Estoque</div><div class="kc-val">${fmtBRL(totalSale)}</div>
+        <div class="kc-sub pos">${fmtN(totalUnits)} unidades · ${D.stock.length} SKUs</div></div>
+      <div class="card card-p" style="border-left:3px solid var(--blue)">
+        <div class="kc-lbl">Custo Imobilizado</div><div class="kc-val">${fmtBRL(totalCost)}</div>
+        <div class="kc-sub neu">lucro potencial ${fmtBRL(potencialLucro)}</div></div>
       <div class="card card-p" style="border-left:3px solid var(--red)">
         <div class="kc-lbl">SKUs Críticos</div>
         <div class="kc-val" style="color:var(--red)">${critItems}</div>
         <div class="kc-sub neg">ruptura em ${minDays} dias</div></div>
       <div class="card card-p" style="border-left:3px solid var(--ora)">
-        <div class="kc-lbl">SKUs em Atenção</div>
-        <div class="kc-val" style="color:var(--ora)">${warnItems}</div>
-        <div class="kc-sub warn">monitorar esta semana</div></div>
-      <div class="card card-p" style="border-left:3px solid var(--blue)">
-        <div class="kc-lbl">Giro Médio Diário</div>
-        <div class="kc-val">${fmtN(D.stock.reduce((a,s)=>a+s.d,0)/D.stock.length)} un.</div>
-        <div class="kc-sub neu">todos os SKUs</div></div>`;
+        <div class="kc-lbl">SKUs em Atenção · Giro Médio</div>
+        <div class="kc-val" style="color:var(--ora)">${warnItems} <span style="color:var(--g1);font-size:13px">/ ${giroMedio.toFixed(1)} un./dia</span></div>
+        <div class="kc-sub warn">monitorar esta semana</div></div>`;
   }
 
   // Reorder schedule
