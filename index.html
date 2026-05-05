@@ -1419,7 +1419,8 @@ function renderVendas(){
   const roas=c.roas||4.2;
   const heroEl=document.getElementById('heroBannerRoas');
   if(heroEl)heroEl.textContent=roas.toFixed(1)+'×';
-  const totalRev=D.rev||D.daily.reduce((a,r)=>a+(r._rev||((r.sp0+r.sp1)*roas)),0);
+  const totalRev=c.rev||D.rev||D.daily.reduce((a,r)=>a+(r._rev||((r.sp0+r.sp1)*roas)),0);
+  const totalSpend=c.spend||D.daily.reduce((a,r)=>a+(r._spend||r.sp0+r.sp1),0)||1;
   const recRev=D.repurchase.rev;
 
   // ── Meta do Mês ────────────────────────────────────────────────
@@ -1482,13 +1483,13 @@ function renderVendas(){
     <div class="card card-p" style="border-top:3px solid var(--green)">
       <div class="kc-lbl">Faturamento Total</div>
       <div class="kc-val">${fmtK(totalRev)}</div>
-      <div class="kc-sub pos">últimos 30 dias</div>
+      <div class="kc-sub pos">período filtrado</div>
       <div style="margin-top:10px"><canvas id="spk0" height="36"></canvas></div>
     </div>
     <div class="card card-p" style="border-top:3px solid var(--blue)">
-      <div class="kc-lbl">Compras (Meta Ads)</div>
+      <div class="kc-lbl">Compras</div>
       <div class="kc-val">${fmtN(c.orders)}</div>
-      <div class="kc-sub pos">conversões totais</div>
+      <div class="kc-sub pos">filtro aplicado</div>
       <div style="margin-top:10px"><canvas id="spk1" height="36"></canvas></div>
     </div>
     <div class="card card-p" style="border-top:3px solid var(--ora)">
@@ -1505,7 +1506,6 @@ function renderVendas(){
     </div>`;
 
   // Revenue composition rows — based on daily data
-  const totalSpend=D.daily.reduce((a,r)=>a+(r._spend||r.sp0+r.sp1),0)||1;
   const tot=totalRev;
   const pCamp=100;
   document.getElementById('v-comp-rows').innerHTML=`
