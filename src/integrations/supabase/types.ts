@@ -52,29 +52,56 @@ export type Database = {
       }
       stock_items: {
         Row: {
+          category: string | null
+          cost_price: number | null
           created_at: string
           days_left: number
           id: string
+          location: string | null
+          min_stock: number | null
           name: string
+          notes: string | null
+          sale_price: number | null
+          sku: string | null
           status: string
+          supplier: string | null
+          unit: string | null
           units: number
           updated_at: string
         }
         Insert: {
+          category?: string | null
+          cost_price?: number | null
           created_at?: string
           days_left?: number
           id?: string
+          location?: string | null
+          min_stock?: number | null
           name: string
+          notes?: string | null
+          sale_price?: number | null
+          sku?: string | null
           status?: string
+          supplier?: string | null
+          unit?: string | null
           units?: number
           updated_at?: string
         }
         Update: {
+          category?: string | null
+          cost_price?: number | null
           created_at?: string
           days_left?: number
           id?: string
+          location?: string | null
+          min_stock?: number | null
           name?: string
+          notes?: string | null
+          sale_price?: number | null
+          sku?: string | null
           status?: string
+          supplier?: string | null
+          unit?: string | null
           units?: number
           updated_at?: string
         }
