@@ -182,19 +182,35 @@ function normalizeAccountId(raw: string): string | null {
   return /^act_\d{6,}$/.test(withPrefix) ? withPrefix : null;
 }
 
-async function validateAccount(accountId: string): Promise<{ok:true;account:any}|{ok:false;error:string;status:number}> {
+const REQUIRED_SCOPES = ["ads_read","read_insights"];
+
+async function validateAccount(accountId: string): Promise<{ok:true;account:any;permissions:string[];missing:string[]}|{ok:false;error:string;status:number;permissions?:string[];missing?:string[]}> {
+  let permissions: string[] = [];
+  let missing: string[] = [];
   try {
-    const acct = await metaGet(accountId, { fields: "id,name,currency,timezone_name,account_status" });
-    if (!acct?.id) return { ok:false, error:"Conta não encontrada", status:404 };
-    if (acct.account_status && acct.account_status !== 1) {
-      return { ok:false, error:`Conta inativa (status ${acct.account_status})`, status:403 };
+    const perms = await metaGet("me/permissions", {});
+    permissions = (perms.data||[]).filter((p:any)=>p.status==="granted").map((p:any)=>p.permission);
+    missing = REQUIRED_SCOPES.filter(s=>!permissions.includes(s));
+    if (missing.length) {
+      return { ok:false, status:403, permissions, missing,
+        error:`Token sem escopos necessários: ${missing.join(", ")}. Conceda em developers.facebook.com → Graph API Explorer.` };
     }
-    return { ok:true, account: acct };
+  } catch (e) {
+    return { ok:false, status:401, error:`Token inválido ou expirado: ${e instanceof Error ? e.message : String(e)}` };
+  }
+  try {
+    const acct = await metaGet(accountId, { fields: "id,name,currency,timezone_name,account_status,business" });
+    if (!acct?.id) return { ok:false, error:"Conta não encontrada", status:404, permissions, missing };
+    if (acct.account_status && acct.account_status !== 1) {
+      return { ok:false, status:403, permissions, missing,
+        error:`Conta inativa (status ${acct.account_status})` };
+    }
+    return { ok:true, account: acct, permissions, missing };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes("400") || msg.includes("404")) return { ok:false, error:`Ad Account ID inválido ou sem acesso: ${accountId}`, status:400 };
-    if (msg.includes("403")) return { ok:false, error:`Token sem permissão para a conta ${accountId}`, status:403 };
-    return { ok:false, error: msg, status:502 };
+    if (msg.includes("400") || msg.includes("404")) return { ok:false, status:400, permissions, missing, error:`Ad Account ID inválido ou sem acesso do token: ${accountId}` };
+    if (msg.includes("403") || msg.includes("(#200)") || msg.includes("(#10)")) return { ok:false, status:403, permissions, missing, error:`Token não tem acesso à conta ${accountId}. Verifique se o usuário do token foi adicionado à BM com permissão de leitura.` };
+    return { ok:false, status:502, permissions, missing, error: msg };
   }
 }
 
@@ -211,8 +227,8 @@ Deno.serve(async (req) => {
 
     if (action === "validate") {
       const v = await validateAccount(accountId);
-      if (!v.ok) return json({ ok:false, error:v.error, account_id:accountId }, v.status);
-      return json({ ok:true, account_id:accountId, account:v.account });
+      if (!v.ok) return json({ ok:false, error:v.error, account_id:accountId, permissions:v.permissions, missing:v.missing }, v.status);
+      return json({ ok:true, account_id:accountId, account:v.account, permissions:v.permissions });
     }
 
     const force = url.searchParams.has("force");
