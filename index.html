@@ -2395,6 +2395,7 @@ function applyMetaData(data){
   const {summary,campaigns,daily,account,whatsapp_funnel}=data;
   const cur=account.currency||'USD';
   const sym=cur==='BRL'?'R$':'$';
+  window.CUR_SYM=sym;
 
   // Currency-aware formatter for Meta data
   window.fmtMeta=(v)=>`${sym}${new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(v||0)}`;
@@ -2403,6 +2404,19 @@ function applyMetaData(data){
     if(v>=1e3) return sym+(v/1e3).toFixed(0)+'K';
     return sym+Math.round(v||0);
   };
+  // Override global fmtK so todos os charts/labels usem a moeda correta
+  window.fmtK=window.fmtMetaK;
+
+  // Swap "R$" → símbolo correto em todo o DOM (para textos estáticos)
+  if(sym!=='R$'){
+    const walk=(node)=>{
+      if(node.nodeType===3){ if(node.nodeValue.includes('R$')) node.nodeValue=node.nodeValue.replace(/R\$/g,sym); }
+      else if(node.nodeType===1 && !['SCRIPT','STYLE'].includes(node.tagName)){
+        for(const c of node.childNodes) walk(c);
+      }
+    };
+    walk(document.body);
+  }
 
   // ── Summary fields ────────────────────────────────────────────────
   D.spend=summary.spend;
