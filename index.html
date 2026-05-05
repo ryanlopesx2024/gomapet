@@ -3034,9 +3034,17 @@ function removeFilter(k){
 function applyFiltersToKPIs(){
   const f=window.__filters||getActiveFilters();
   const base=window.__baseSnapshot;
-  if(!base||!base.rev)return;
-  const m=(PERIOD_MULT[f.period]||1)*(CHANNEL_MULT[f.channel]||1)*(CAT_MULT[f.category]||1)*(STATUS_MULT[f.status]||1)*(f.seller&&f.seller!=='all'?0.18:1);
+  const baseD=window.__baseD;
+  if(!base||!base.rev||!baseD)return;
+
+  const periodM=PERIOD_MULT[f.period]||1;
+  const channelM=CHANNEL_MULT[f.channel]||1;
+  const catM=CAT_MULT[f.category]||1;
+  const statusM=STATUS_MULT[f.status]||1;
+  const sellerM=(f.seller&&f.seller!=='all')?0.18:1;
+  const m=periodM*channelM*catM*statusM*sellerM;
   const spendFactor=(f.channel==='organic'||f.channel==='recompra')?0.05:1;
+
   const rev=base.rev*m;
   const orders=Math.max(0,Math.round(base.orders*m));
   const spend=base.spend*m*spendFactor;
@@ -3048,18 +3056,72 @@ function applyFiltersToKPIs(){
     roas:spend>0?rev/spend:0,
     cpa:orders>0?spend/orders:0
   };
+
+  // ─── Propaga filtros para os dados base de cada página ────
+  // Campanhas (Vendas / Tráfego) — escala receita/spend/conv/cliques/impr.
+  D.camps=(baseD.camps||[]).map(c=>({
+    ...c,
+    rev:(c.rev||0)*m,
+    spend:(c.spend||0)*m*spendFactor,
+    conv:Math.max(0,Math.round((c.conv||0)*m)),
+    clicks:Math.max(0,Math.round((c.clicks||0)*m)),
+    impr:Math.max(0,Math.round((c.impr||0)*m)),
+    msgs:Math.max(0,Math.round((c.msgs||0)*m))
+  }));
+  // WhatsApp funnel
+  D.whatsapp=(baseD.whatsapp||[]).map(w=>({...w,n:Math.max(0,Math.round((w.n||0)*m))}));
+  // Daily series
+  D.daily=(baseD.daily||[]).map(d=>{
+    const out={...d};
+    ['rev','spend','conv','msgs','clicks','impr','_pur'].forEach(k=>{
+      if(typeof out[k]==='number')out[k]=k==='rev'||k==='spend'?out[k]*m*(k==='spend'?spendFactor:1):Math.max(0,Math.round(out[k]*m));
+    });
+    return out;
+  });
+  // Bafisco / Upsell
+  if(baseD.bafisco){
+    D.bafisco={...baseD.bafisco,
+      rev:(baseD.bafisco.rev||0)*m,
+      spend:(baseD.bafisco.spend||0)*m*spendFactor,
+      mainRev:(baseD.bafisco.mainRev||0)*m,
+      msgs:Math.max(0,Math.round((baseD.bafisco.msgs||0)*m)),
+      conv:Math.max(0,Math.round((baseD.bafisco.conv||0)*m)),
+      mainConv:Math.max(0,Math.round((baseD.bafisco.mainConv||0)*m)),
+      funnel:(baseD.bafisco.funnel||[]).map(x=>({...x,n:Math.max(0,Math.round((x.n||0)*m))}))
+    };
+  }
+  // Recompra
+  if(baseD.repurchase){
+    D.repurchase={...baseD.repurchase,
+      rev:(baseD.repurchase.rev||0)*m,
+      recontactPool:Math.max(0,Math.round((baseD.repurchase.recontactPool||0)*m)),
+      potRecontact:Math.max(0,Math.round((baseD.repurchase.potRecontact||0)*m))
+    };
+  }
+  // Time — filtra por vendedor selecionado
+  if(f.seller&&f.seller!=='all'){
+    D.team=(baseD.team||[]).filter(p=>p.n===f.seller);
+  } else {
+    D.team=JSON.parse(JSON.stringify(baseD.team||[]));
+  }
+
   if(typeof updateKPIs==='function')updateKPIs();
   Object.keys(CH).forEach(k=>{try{if(CH[k]&&CH[k].destroy)CH[k].destroy();}catch(e){} delete CH[k];});
+  // limpa caches inline (algumas seções só renderizam se vazias)
+  ['stock-value-kpis','stock-reorder','tm-detail-cards'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='';});
   const curPg=document.querySelector('.page.active');
   if(curPg){const pg=curPg.id.replace('pg-','');try{renders[pg]&&renders[pg]();}catch(e){console.error('Erro ao renderizar página filtrada:',e);}}
 }
 function applyFilters(close){
   const f=getActiveFilters(); window.__filters=f;
+  const isDefault=f.period==='last_30_days'&&f.channel==='all'&&f.category==='all'&&f.seller==='all'&&f.status==='all';
+  window.__filtersActive=!isDefault;
   if(close)document.getElementById('fltPop')?.classList.remove('open');
   if(!window.__baseSnapshot&&window.S&&S.comp&&S.comp.rev){window.__baseSnapshot={...S.comp};}
+  if(!window.__baseD)_snapshotBaseD();
   applyFiltersToKPIs();
   renderFilterChips();
-  console.log('[filtros aplicados]',f,'→ rev:',S.comp?.rev);
+  console.log('[filtros]',f,'→ rev:',S.comp?.rev?.toFixed(0));
 }
 function clearFilters(){
   ['fChannel','fCat','fSeller','fStatus'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='all';});
