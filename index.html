@@ -1486,6 +1486,18 @@ const CH={};
 
 /* ═══ COMPUTE ══════════════════════════════════════════════ */
 function compute(){
+  // recompute base snapshot from raw data
+  if(window.__baseD){
+    // sempre trabalhamos a partir do baseD para garantir reset entre filtros
+    const b=window.__baseD;
+    D.spend=b.spend; D.rev=b.rev; D.conv=b.conv; D.roas=b.roas; D.cpa=b.cpa;
+    D.camps=JSON.parse(JSON.stringify(b.camps||[]));
+    D.whatsapp=JSON.parse(JSON.stringify(b.whatsapp||[]));
+    D.daily=JSON.parse(JSON.stringify(b.daily||[]));
+    D.team=JSON.parse(JSON.stringify(b.team||[]));
+    D.bafisco=JSON.parse(JSON.stringify(b.bafisco||{}));
+    D.repurchase=JSON.parse(JSON.stringify(b.repurchase||{}));
+  }
   const spend=D.spend, orders=D.conv||D.whatsapp[D.whatsapp.length-1].n;
   const rev=D.rev||D.camps.reduce((a,c)=>a+c.rev,0);
   const roas=D.roas||(rev/spend);
@@ -1493,7 +1505,20 @@ function compute(){
   S.comp={spend,orders,rev,roas,cpa,margin:D.margin,
     profit:rev*(D.margin/100), avgTkt:rev/orders};
   // base snapshot sempre atualizado quando dados chegam
-  if(rev>0){window.__baseSnapshot={...S.comp};}
+  if(rev>0&&!window.__baseD){
+    window.__baseSnapshot={...S.comp};
+    window.__baseD={
+      spend:D.spend,rev:D.rev,conv:D.conv,roas:D.roas,cpa:D.cpa,
+      camps:JSON.parse(JSON.stringify(D.camps||[])),
+      whatsapp:JSON.parse(JSON.stringify(D.whatsapp||[])),
+      daily:JSON.parse(JSON.stringify(D.daily||[])),
+      team:JSON.parse(JSON.stringify(D.team||[])),
+      bafisco:JSON.parse(JSON.stringify(D.bafisco||{})),
+      repurchase:JSON.parse(JSON.stringify(D.repurchase||{}))
+    };
+  } else if(rev>0){
+    window.__baseSnapshot={...S.comp};
+  }
   // re-aplica filtros se houver
   if(window.__filters && typeof applyFiltersToKPIs==='function'){applyFiltersToKPIs();}
 }
