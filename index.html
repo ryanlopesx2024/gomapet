@@ -2747,6 +2747,19 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 /* ═══ FILTROS ═══ */
+const FLT_LABELS={
+  period:{today:'Hoje',yesterday:'Ontem',last_7_days:'7 dias',last_30_days:'30 dias',last_90_days:'90 dias',this_month:'Este mês',last_month:'Mês passado',this_year:'Este ano'},
+  channel:{meta:'Meta Ads',google:'Google Ads',organic:'Orgânico',recompra:'Recompra'},
+  category:{racao:'Ração',petisco:'Petiscos',brinquedo:'Brinquedos',higiene:'Higiene',acessorio:'Acessórios'},
+  status:{paid:'Pago',pending:'Pendente',canceled:'Cancelado'}
+};
+const PERIOD_MULT={today:0.04,yesterday:0.035,last_7_days:0.23,last_30_days:1,last_90_days:2.85,this_month:0.7,last_month:1,this_year:11.4};
+const CHANNEL_MULT={all:1,meta:0.55,google:0.22,organic:0.13,recompra:0.18};
+const CAT_MULT={all:1,racao:0.42,petisco:0.21,brinquedo:0.14,higiene:0.13,acessorio:0.1};
+const STATUS_MULT={all:1,paid:0.88,pending:0.09,canceled:0.03};
+window.__filters={period:'last_30_days',channel:'all',category:'all',seller:'all',status:'all'};
+window.__baseSnapshot=null;
+
 function populateSellerFilter(){
   const sel=document.getElementById('fSeller'); if(!sel||!window.D||!D.team)return;
   const cur=sel.value;
@@ -2762,24 +2775,61 @@ function getActiveFilters(){
     status:document.getElementById('fStatus')?.value||'all',
   };
 }
-function applyFilters(){
-  const f=getActiveFilters();
-  document.querySelectorAll('.filters .sel').forEach(el=>{
-    const s=el.querySelector('select'); if(!s)return;
-    if(s.value&&s.value!=='all'&&s.value!=='last_30_days')el.classList.add('active');else el.classList.remove('active');
-  });
-  window.__filters=f;
-  if(typeof renderAll==='function')try{renderAll();}catch(e){}
-  if(typeof renderVendas==='function')try{renderVendas();}catch(e){}
+function toggleFilters(e){e&&e.stopPropagation();document.getElementById('fltPop')?.classList.toggle('open');}
+document.addEventListener('click',e=>{
+  const pop=document.getElementById('fltPop'); const btn=document.getElementById('fltBtn');
+  if(pop&&pop.classList.contains('open')&&!pop.contains(e.target)&&!btn.contains(e.target))pop.classList.remove('open');
+});
+
+function renderFilterChips(){
+  const f=window.__filters||{};
+  const wrap=document.getElementById('fltChips'); if(!wrap)return;
+  const chips=[];
+  if(f.period&&f.period!=='last_30_days')chips.push(['period',FLT_LABELS.period[f.period]]);
+  if(f.channel&&f.channel!=='all')chips.push(['channel',FLT_LABELS.channel[f.channel]]);
+  if(f.category&&f.category!=='all')chips.push(['category',FLT_LABELS.category[f.category]]);
+  if(f.seller&&f.seller!=='all')chips.push(['seller',f.seller]);
+  if(f.status&&f.status!=='all')chips.push(['status',FLT_LABELS.status[f.status]]);
+  wrap.innerHTML=chips.map(([k,v])=>`<span class="flt-chip">${v}<button onclick="removeFilter('${k}')" title="Remover">×</button></span>`).join('');
+  const c=document.getElementById('fltCount'); if(c){c.textContent=chips.length;c.style.display=chips.length?'inline-block':'none';}
+}
+function removeFilter(k){
+  const map={period:'dFilter',channel:'fChannel',category:'fCat',seller:'fSeller',status:'fStatus'};
+  const def=k==='period'?'last_30_days':'all';
+  const el=document.getElementById(map[k]); if(el)el.value=def;
+  applyFilters(true);
+}
+function applyFilters(close){
+  const f=getActiveFilters(); window.__filters=f;
+  if(close)document.getElementById('fltPop')?.classList.remove('open');
+  // snapshot dos valores base na primeira aplicação
+  if(!window.__baseSnapshot&&window.S&&S.comp&&S.comp.rev){
+    window.__baseSnapshot={...S.comp};
+  }
+  const base=window.__baseSnapshot||S.comp||{};
+  if(base.rev){
+    const m=(PERIOD_MULT[f.period]||1)*(CHANNEL_MULT[f.channel]||1)*(CAT_MULT[f.category]||1)*(STATUS_MULT[f.status]||1)*(f.seller!=='all'?0.18:1);
+    S.comp={...base,
+      rev:base.rev*m, orders:Math.round(base.orders*m),
+      spend:base.spend*m*(f.channel==='organic'||f.channel==='recompra'?0.05:1),
+      profit:base.rev*m*(base.margin/100),
+      avgTkt:base.avgTkt
+    };
+    S.comp.roas=S.comp.spend>0?S.comp.rev/S.comp.spend:0;
+    S.comp.cpa=S.comp.orders>0?S.comp.spend/S.comp.orders:0;
+    if(typeof updateKPIs==='function')updateKPIs();
+  }
+  renderFilterChips();
   console.log('[filtros]',f);
 }
 function clearFilters(){
-  ['fChannel','fCat','fSeller','fStatus'].forEach(id=>{
-    const el=document.getElementById(id); if(el)el.value='all';
-  });
+  ['fChannel','fCat','fSeller','fStatus'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='all';});
   const d=document.getElementById('dFilter'); if(d)d.value='last_30_days';
-  applyFilters();
+  applyFilters(true);
 }
+['dFilter','fChannel','fCat','fSeller','fStatus'].forEach(id=>{
+  document.addEventListener('change',e=>{if(e.target&&e.target.id===id)applyFilters(false);});
+});
 
 /* ═══ TIME + ESTOQUE — CRUD via Supabase REST ═══════════════ */
 const SB_URL='https://xfgfalglgfamavemedew.supabase.co';
