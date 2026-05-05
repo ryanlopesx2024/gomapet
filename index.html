@@ -1886,7 +1886,7 @@ function renderRecompra(){
       weeks.push({label:`${s}–${e}`,pur:wPur,msgs:wMsgs,rev:wRev,spend:wSpend,conv:wConv});
     }
     const maxPur=Math.max(...weeks.map(w=>w.pur),1);
-    const colFn=v=>v>0.6?'rgba(41,179,71,.':'v>0.3?'rgba(240,192,64,.':'rgba(232,68,85,.';
+    const colFn=v=>v>0.6?'rgba(41,179,71,.7)':v>0.3?'rgba(240,192,64,.7)':'rgba(232,68,85,.6)';
     cohortEl.innerHTML=`
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
         ${weeks.map(w=>{
