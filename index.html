@@ -1106,12 +1106,16 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         <div class="card" style="padding:0;overflow:hidden" id="tm-goalBars"></div>
       </div>
       <div class="sec" style="padding-top:0">
-        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
           <span>Ranking Completo</span>
-          <button onclick="openTeamModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Vendedor</button>
+          <div style="display:flex;gap:6px">
+            <button onclick="downloadTeamTemplate()" title="Baixar modelo CSV" style="background:transparent;border:1px solid var(--b);border-radius:8px;color:var(--g1);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-download"></i> Modelo CSV</button>
+            <button onclick="openTeamImport()" style="background:rgba(91,156,246,.12);border:1px solid var(--blue);border-radius:8px;color:var(--blue);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Importar CSV</button>
+            <button onclick="openTeamModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Vendedor</button>
+          </div>
         </div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <table><thead><tr><th>Vendedor</th><th>Atendimentos</th><th>Vendas</th><th>Conversão</th><th>Faturamento</th><th>Ações</th></tr></thead>
+        <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+          <table><thead><tr><th>Vendedor</th><th>Função</th><th>Status</th><th>Atend.</th><th>Vendas</th><th>Conv.</th><th>Faturamento</th><th>Meta</th><th>% Meta</th><th>BM / Conta Ads</th><th>Contato</th><th>Ações</th></tr></thead>
           <tbody id="timeTbl"></tbody></table>
         </div>
       </div>
@@ -1236,22 +1240,100 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
 
 <!-- TEAM MODAL -->
 <div id="teamOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeTeamModal()">
-  <div class="meta-modal">
+  <div class="meta-modal" style="width:680px;max-height:92vh;overflow-y:auto">
     <h2 id="teamModalTitle">👤 Novo Vendedor</h2>
+    <p>Cadastre o vendedor com todas as informações necessárias para alocar BMs/contas de anúncios e acompanhar metas.</p>
     <input type="hidden" id="teamId">
-    <input class="meta-input" id="teamName" placeholder="Nome completo">
-    <input class="meta-input" id="teamInitials" placeholder="Iniciais (ex: CF)" maxlength="3" style="margin-top:8px">
+
+    <!-- Identificação -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-id-badge"></i> Identificação</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+      <input class="meta-input" id="teamName" placeholder="Nome completo *">
+      <input class="meta-input" id="teamInitials" placeholder="Iniciais (ex: CF) *" maxlength="3">
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <select class="meta-input" id="teamRole">
+        <option value="">Função…</option>
+        <option value="SDR">SDR</option>
+        <option value="Closer">Closer</option>
+        <option value="Vendedor">Vendedor</option>
+        <option value="Gestor de Tráfego">Gestor de Tráfego</option>
+        <option value="Coordenador">Coordenador</option>
+        <option value="Gerente">Gerente</option>
+      </select>
+      <select class="meta-input" id="teamStatusF">
+        <option value="active">🟢 Ativo</option>
+        <option value="paused">🟡 Pausado</option>
+        <option value="vacation">🌴 Férias</option>
+        <option value="inactive">🔴 Inativo</option>
+      </select>
+    </div>
+
+    <!-- Contato -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-address-book"></i> Contato</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="teamEmail" type="email" placeholder="E-mail">
+      <input class="meta-input" id="teamPhone" placeholder="Telefone / WhatsApp">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="teamRegion" placeholder="Região / Equipe (ex: SP-Norte)">
+      <input class="meta-input" id="teamHired" type="date" placeholder="Data de admissão">
+    </div>
+
+    <!-- BM / Tráfego -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fab fa-facebook"></i> BM & Conta de Anúncios</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="teamBm" placeholder="Nome da BM (ex: BM Principal)">
+      <input class="meta-input" id="teamAdAccount" placeholder="ID da conta (act_123456789)">
+    </div>
+
+    <!-- Performance -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-chart-line"></i> Performance & Meta</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       <input class="meta-input" id="teamSales" type="number" placeholder="Atendimentos" min="0">
       <input class="meta-input" id="teamConv" type="number" placeholder="Vendas" min="0">
+      <input class="meta-input" id="teamRevenue" type="number" placeholder="Faturamento (R$)" min="0" step="0.01">
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <input class="meta-input" id="teamRevenue" type="number" placeholder="Faturamento" min="0" step="0.01">
-      <input class="meta-input" id="teamColor" type="color" value="#29B347" style="padding:4px;height:38px">
+    <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-top:8px;align-items:center">
+      <input class="meta-input" id="teamGoal" type="number" placeholder="Meta de faturamento (R$)" min="0" step="0.01">
+      <input class="meta-input" id="teamColor" type="color" value="#29B347" style="padding:4px;height:38px" title="Cor identificadora">
     </div>
-    <button class="meta-btn" onclick="saveTeam()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
-    <div class="meta-status" id="teamStatus"></div>
+    <div id="teamMetaPreview" style="margin-top:8px;font-size:11px;color:var(--g1);text-align:right;font-family:'JetBrains Mono',monospace"></div>
+
+    <!-- Observações -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-note-sticky"></i> Observações</div>
+    <textarea class="meta-input" id="teamNotes" placeholder="Notas internas, especialidades, escala de trabalho…" rows="2" style="resize:vertical;font-family:'Inter',sans-serif"></textarea>
+
+    <button class="meta-btn" onclick="saveTeam()" style="margin-top:18px"><i class="fas fa-save"></i> Salvar Vendedor</button>
+    <div class="meta-status" id="teamStatus" style="margin-top:8px;font-size:11px;color:var(--red);text-align:center"></div>
     <button onclick="closeTeamModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
+<!-- TEAM IMPORT CSV MODAL -->
+<div id="teamImportOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeTeamImport()">
+  <div class="meta-modal" style="width:640px;max-height:92vh;overflow-y:auto">
+    <h2>📥 Importar Vendedores via CSV</h2>
+    <p>Faça upload de um CSV com sua equipe e contas de BM/Ads. Use o <b style="color:var(--green);cursor:pointer" onclick="downloadTeamTemplate()">modelo CSV</b> para garantir as colunas corretas.</p>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-list"></i> Colunas aceitas</div>
+    <div style="font-size:11px;color:var(--g1);background:var(--bg2);border:1px solid var(--b);border-radius:8px;padding:10px;line-height:1.6">
+      <b style="color:var(--w)">Obrigatório:</b> name, initials<br>
+      <b style="color:var(--w)">Opcional:</b> role, status, email, phone, region, hired_at, bm_name, ad_account, sales, conversions, revenue, goal, color, notes
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Arquivo</div>
+    <input type="file" id="teamCsvFile" accept=".csv,text/csv" class="meta-input" style="padding:8px;cursor:pointer">
+
+    <div id="teamImportPreview" style="margin-top:12px;font-size:11px;color:var(--g1);max-height:200px;overflow:auto"></div>
+
+    <label style="font-size:11px;color:var(--g1);display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:8px">
+      <input type="checkbox" id="teamImportReplace"> Substituir toda a equipe atual
+    </label>
+
+    <button class="meta-btn" id="teamImportBtn" onclick="runTeamImport()" style="margin-top:14px"><i class="fas fa-upload"></i> Importar Vendedores</button>
+    <div class="meta-status" id="teamImportStatus" style="margin-top:8px;font-size:11px;text-align:center"></div>
+    <button onclick="closeTeamImport()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
   </div>
 </div>
 
@@ -2246,20 +2328,37 @@ function renderTime(){
     </div>`;}).join('');
 
   // Table
-  document.getElementById('timeTbl').innerHTML=sorted.map((p,idx)=>`
-    <tr>
+  const statusMap={active:{l:'🟢 Ativo',c:'b-g'},paused:{l:'🟡 Pausado',c:'b-o'},vacation:{l:'🌴 Férias',c:'b-b'},inactive:{l:'🔴 Inativo',c:'b-r'}};
+  document.getElementById('timeTbl').innerHTML=sorted.map((p,idx)=>{
+    const st=statusMap[p.status]||statusMap.active;
+    const goalPct=p.goal>0?(p.r/p.goal*100):null;
+    const goalCol=goalPct==null?'var(--g1)':goalPct>=100?'var(--green)':goalPct>=70?'var(--ora)':'var(--red)';
+    return`<tr>
       <td><div style="display:flex;align-items:center;gap:8px">
         <div class="lbrank ${idx===0?'gold':idx===1?'silver':idx===2?'bronze':''}">${idx+1}</div>
         <div style="width:26px;height:26px;border-radius:50%;background:${p.col}22;color:${p.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Fredoka',sans-serif">${p.i}</div>
-        <span style="font-weight:600">${p.n}</span>
+        <div style="line-height:1.3"><div style="font-weight:600">${p.n}</div>${p.region?`<div style="font-size:9px;color:var(--g1)">${p.region}</div>`:''}</div>
       </div></td>
+      <td style="font-size:10px;color:var(--g1)">${p.role||'—'}</td>
+      <td><span class="badge ${st.c}" style="font-size:9px">${st.l}</span></td>
       <td class="mono" style="color:var(--g1)">${fmtN(p.s)}</td>
       <td class="mono">${fmtN(Math.round(p.s*p.c/100))}</td>
-      <td><div class="cvbar"><div class="cvtrack"><div class="cvfill" style="background:${p.c<goal?'var(--red)':'var(--green)'}" data-w="${Math.min(p.c,100)}"></div></div>
-        <span class="mono" style="font-size:11px;color:${p.c<goal?'var(--red)':'var(--green)'}">${p.c}%</span></div></td>
+      <td><span class="mono" style="font-size:11px;color:${p.c<goal?'var(--red)':'var(--green)'}">${p.c}%</span></td>
       <td class="mono" style="font-weight:700;color:${p.col}">${fmtBRL(p.r)}</td>
+      <td class="mono" style="font-size:10px;color:var(--g1)">${p.goal>0?fmtBRL(p.goal):'—'}</td>
+      <td class="mono" style="font-weight:700;color:${goalCol};font-size:10px">${goalPct==null?'—':goalPct.toFixed(0)+'%'}</td>
+      <td style="font-size:10px;line-height:1.4">
+        ${p.bm?`<div style="color:var(--w)">${p.bm}</div>`:''}
+        ${p.adAccount?`<div class="mono" style="color:var(--blue);font-size:9px">${p.adAccount}</div>`:''}
+        ${!p.bm&&!p.adAccount?'<span style="color:var(--g1)">—</span>':''}
+      </td>
+      <td style="font-size:10px;line-height:1.4">
+        ${p.phone?`<div><i class="fas fa-phone" style="font-size:8px;color:var(--green)"></i> ${p.phone}</div>`:''}
+        ${p.email?`<div style="color:var(--g1)"><i class="fas fa-envelope" style="font-size:8px"></i> ${p.email}</div>`:''}
+        ${!p.phone&&!p.email?'<span style="color:var(--g1)">—</span>':''}
+      </td>
       <td><div style="display:flex;gap:6px"><button onclick="editTeam('${p.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--cream);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-pen"></i></button><button onclick="deleteTeam('${p.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--red);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-trash"></i></button></div></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
 
   // Detail cards
   const detailEl=document.getElementById('tm-detail-cards');
@@ -2978,7 +3077,14 @@ async function sbReq(path,method='GET',body){
 async function loadTeam(){
   try{
     const rows=await sbReq('sales_team?select=*&order=revenue.desc');
-    D.team=rows.map(r=>({id:r.id,n:r.name,i:r.initials,s:r.sales,c:r.sales?Math.round(r.conversions/r.sales*100):0,r:Number(r.revenue),col:r.color,_conv:r.conversions}));
+    D.team=rows.map(r=>({
+      id:r.id,n:r.name,i:r.initials,s:r.sales,
+      c:r.sales?Math.round(r.conversions/r.sales*100):0,
+      r:Number(r.revenue),col:r.color,_conv:r.conversions,
+      email:r.email||'',phone:r.phone||'',role:r.role||'',
+      status:r.status||'active',adAccount:r.ad_account||'',bm:r.bm_name||'',
+      goal:Number(r.goal)||0,region:r.region||'',hired:r.hired_at||'',notes:r.notes||''
+    }));
     D.teamGoal=D.team.length?Math.max(20,Math.round(D.team.reduce((a,p)=>a+p.c,0)/D.team.length)):40;
     if(document.querySelector('.nav.on')?.dataset.pg==='time') renderTime();
   }catch(e){console.warn('Falha ao carregar equipe de vendas:',e);}
@@ -2996,12 +3102,31 @@ async function loadStock(){
   }catch(e){console.warn('Falha ao carregar estoque:',e);}
 }
 
+function _teamMetaPreview(){
+  const rev=parseFloat(document.getElementById('teamRevenue').value)||0;
+  const goal=parseFloat(document.getElementById('teamGoal').value)||0;
+  const sales=parseInt(document.getElementById('teamSales').value)||0;
+  const conv=parseInt(document.getElementById('teamConv').value)||0;
+  const el=document.getElementById('teamMetaPreview'); if(!el)return;
+  const parts=[];
+  if(sales>0){const cr=(conv/sales*100);parts.push(`Conv: <b style="color:${cr>=40?'#29B347':cr>=25?'#f0a030':'#e84455'}">${cr.toFixed(1)}%</b>`);}
+  if(goal>0&&rev>=0){const pct=(rev/goal*100);parts.push(`Meta: <b style="color:${pct>=100?'#29B347':pct>=70?'#f0a030':'#e84455'}">${pct.toFixed(0)}%</b>`);}
+  if(rev>0&&conv>0)parts.push(`Tkt: <b>R$ ${(rev/conv).toFixed(2)}</b>`);
+  el.innerHTML=parts.join(' · ');
+}
 function openTeamModal(id){
   document.getElementById('teamOverlay').style.display='flex';
   document.getElementById('teamModalTitle').textContent=id?'✏️ Editar Vendedor':'👤 Novo Vendedor';
-  ['teamId','teamName','teamInitials','teamSales','teamConv','teamRevenue'].forEach(x=>document.getElementById(x).value='');
+  ['teamId','teamName','teamInitials','teamSales','teamConv','teamRevenue','teamGoal','teamEmail','teamPhone','teamRegion','teamHired','teamBm','teamAdAccount','teamNotes'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
   document.getElementById('teamColor').value='#29B347';
+  document.getElementById('teamRole').value='';
+  document.getElementById('teamStatusF').value='active';
   document.getElementById('teamStatus').textContent='';
+  document.getElementById('teamMetaPreview').textContent='';
+  ['teamRevenue','teamGoal','teamSales','teamConv'].forEach(x=>{
+    const e=document.getElementById(x);
+    if(e&&!e.dataset.boundPreview){e.addEventListener('input',_teamMetaPreview);e.dataset.boundPreview='1';}
+  });
   if(id){
     const p=D.team.find(x=>x.id===id); if(!p)return;
     document.getElementById('teamId').value=id;
@@ -3011,6 +3136,17 @@ function openTeamModal(id){
     document.getElementById('teamConv').value=p._conv;
     document.getElementById('teamRevenue').value=p.r;
     document.getElementById('teamColor').value=p.col;
+    document.getElementById('teamRole').value=p.role||'';
+    document.getElementById('teamStatusF').value=p.status||'active';
+    document.getElementById('teamEmail').value=p.email||'';
+    document.getElementById('teamPhone').value=p.phone||'';
+    document.getElementById('teamRegion').value=p.region||'';
+    document.getElementById('teamHired').value=p.hired||'';
+    document.getElementById('teamBm').value=p.bm||'';
+    document.getElementById('teamAdAccount').value=p.adAccount||'';
+    document.getElementById('teamGoal').value=p.goal||'';
+    document.getElementById('teamNotes').value=p.notes||'';
+    _teamMetaPreview();
   }
 }
 function closeTeamModal(){document.getElementById('teamOverlay').style.display='none';}
@@ -3021,20 +3157,126 @@ async function deleteTeam(id){
 }
 async function saveTeam(){
   const id=document.getElementById('teamId').value;
+  const v=x=>document.getElementById(x).value;
   const payload={
-    name:document.getElementById('teamName').value.trim(),
-    initials:document.getElementById('teamInitials').value.trim().toUpperCase(),
-    sales:parseInt(document.getElementById('teamSales').value)||0,
-    conversions:parseInt(document.getElementById('teamConv').value)||0,
-    revenue:parseFloat(document.getElementById('teamRevenue').value)||0,
-    color:document.getElementById('teamColor').value
+    name:v('teamName').trim(),
+    initials:v('teamInitials').trim().toUpperCase(),
+    sales:parseInt(v('teamSales'))||0,
+    conversions:parseInt(v('teamConv'))||0,
+    revenue:parseFloat(v('teamRevenue'))||0,
+    color:v('teamColor'),
+    role:v('teamRole')||null,
+    status:v('teamStatusF')||'active',
+    email:v('teamEmail').trim()||null,
+    phone:v('teamPhone').trim()||null,
+    region:v('teamRegion').trim()||null,
+    hired_at:v('teamHired')||null,
+    bm_name:v('teamBm').trim()||null,
+    ad_account:v('teamAdAccount').trim()||null,
+    goal:parseFloat(v('teamGoal'))||0,
+    notes:v('teamNotes').trim()||null
   };
-  if(!payload.name||!payload.initials){document.getElementById('teamStatus').textContent='Preencha nome e iniciais';return;}
+  if(!payload.name||!payload.initials){document.getElementById('teamStatus').textContent='⚠️ Preencha nome e iniciais';return;}
   try{
     if(id) await sbReq(`sales_team?id=eq.${id}`,'PATCH',payload);
     else await sbReq('sales_team','POST',payload);
     await loadTeam(); closeTeamModal();
   }catch(e){document.getElementById('teamStatus').textContent='Erro: '+e.message;}
+}
+
+/* ═══ IMPORTAÇÃO CSV DE VENDEDORES ════════════════════════ */
+function downloadTeamTemplate(){
+  const headers=['name','initials','role','status','email','phone','region','hired_at','bm_name','ad_account','sales','conversions','revenue','goal','color','notes'];
+  const sample=[
+    ['Carlos Ferreira','CF','Closer','active','carlos@empresa.com','11988887777','SP-Centro','2024-03-15','BM Principal','act_123456789','120','58','85400.00','100000','#29B347','Top performer'],
+    ['Ana Souza','AS','SDR','active','ana@empresa.com','11977776666','SP-Sul','2024-06-01','BM Secundária','act_987654321','340','82','42100.00','60000','#5b9cf6',''],
+    ['Pedro Lima','PL','Vendedor','paused','pedro@empresa.com','11966665555','RJ','2025-01-10','BM Principal','act_555444333','75','21','18900.00','40000','#f0a030','Em treinamento']
+  ];
+  const csv=[headers.join(','),...sample.map(r=>r.map(c=>/[",;\n]/.test(c)?`"${String(c).replace(/"/g,'""')}"`:c).join(','))].join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='modelo-vendedores-gomapet.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function openTeamImport(){
+  document.getElementById('teamImportOverlay').style.display='flex';
+  document.getElementById('teamCsvFile').value='';
+  document.getElementById('teamImportPreview').innerHTML='';
+  document.getElementById('teamImportStatus').textContent='';
+  document.getElementById('teamImportReplace').checked=false;
+  const fi=document.getElementById('teamCsvFile');
+  if(!fi.dataset.bound){fi.addEventListener('change',_previewTeamCsv);fi.dataset.bound='1';}
+}
+function closeTeamImport(){document.getElementById('teamImportOverlay').style.display='none';}
+let _teamCsvParsed=null;
+async function _previewTeamCsv(e){
+  const file=e.target.files[0];
+  const prev=document.getElementById('teamImportPreview');
+  if(!file){_teamCsvParsed=null;prev.innerHTML='';return;}
+  try{
+    const text=await file.text();
+    const {headers,data}=_parseCSV(text);
+    _teamCsvParsed={headers,data};
+    const missing=['name','initials'].filter(c=>!headers.includes(c));
+    if(missing.length){
+      prev.innerHTML=`<div style="color:var(--red)">⚠️ Colunas obrigatórias ausentes: <b>${missing.join(', ')}</b>. Detectadas: ${headers.join(', ')||'nenhuma'}</div>`;
+      return;
+    }
+    const sample=data.slice(0,5);
+    const showCols=headers.filter(h=>['name','initials','role','bm_name','ad_account','revenue'].includes(h)).slice(0,6);
+    prev.innerHTML=`<div style="color:var(--green);margin-bottom:6px"><b>${data.length}</b> vendedor(es) detectado(s). Pré-visualização:</div>
+      <div style="border:1px solid var(--b);border-radius:8px;overflow:auto;max-height:160px">
+      <table style="width:100%;font-size:10px"><thead><tr>${showCols.map(h=>`<th style="padding:6px;text-align:left;color:var(--g1);background:var(--bg2)">${h}</th>`).join('')}</tr></thead>
+      <tbody>${sample.map(r=>`<tr>${showCols.map(h=>`<td style="padding:6px;border-top:1px solid var(--b)">${(r[h]||'').slice(0,30)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      ${data.length>5?`<div style="margin-top:4px;color:var(--g1)">… e mais ${data.length-5} linha(s)</div>`:''}`;
+  }catch(err){prev.innerHTML=`<div style="color:var(--red)">Erro ao ler arquivo: ${err.message}</div>`;}
+}
+async function runTeamImport(){
+  const status=document.getElementById('teamImportStatus');
+  const btn=document.getElementById('teamImportBtn');
+  if(!_teamCsvParsed||!_teamCsvParsed.data.length){status.style.color='var(--red)';status.textContent='⚠️ Selecione um arquivo CSV válido primeiro.';return;}
+  const replace=document.getElementById('teamImportReplace').checked;
+  if(replace&&!confirm('Isso vai APAGAR toda a equipe atual antes de importar. Confirmar?'))return;
+  const num=v=>{const n=parseFloat(String(v||'').replace(',','.'));return isNaN(n)?0:n;};
+  const intv=v=>{const n=parseInt(String(v||'').replace(/[^\d-]/g,''));return isNaN(n)?0:n;};
+  const validStatus=['active','paused','vacation','inactive'];
+  const items=_teamCsvParsed.data.map(r=>{
+    const st=(r.status||'active').toLowerCase();
+    return{
+      name:(r.name||'').trim(),
+      initials:(r.initials||'').trim().toUpperCase().slice(0,3),
+      role:r.role||null,
+      status:validStatus.includes(st)?st:'active',
+      email:r.email||null,
+      phone:r.phone||null,
+      region:r.region||null,
+      hired_at:r.hired_at||r['hired at']||null,
+      bm_name:r.bm_name||r['bm name']||r.bm||null,
+      ad_account:r.ad_account||r['ad account']||r.ads||null,
+      sales:intv(r.sales),
+      conversions:intv(r.conversions||r.conv||r.vendas),
+      revenue:num(r.revenue||r.faturamento),
+      goal:num(r.goal||r.meta),
+      color:(r.color||'#29B347').trim(),
+      notes:r.notes||null
+    };
+  }).filter(x=>x.name&&x.initials);
+  if(!items.length){status.style.color='var(--red)';status.textContent='⚠️ Nenhuma linha válida (name ou initials vazios).';return;}
+  btn.disabled=true;status.style.color='var(--g1)';status.textContent=`Importando ${items.length} vendedores…`;
+  try{
+    if(replace){await sbReq('sales_team?id=neq.00000000-0000-0000-0000-000000000000','DELETE');}
+    const batch=100;
+    for(let i=0;i<items.length;i+=batch){
+      await sbReq('sales_team','POST',items.slice(i,i+batch));
+    }
+    status.style.color='var(--green)';status.textContent=`✅ ${items.length} vendedores importados com sucesso!`;
+    await loadTeam();
+    setTimeout(()=>closeTeamImport(),1200);
+  }catch(e){
+    status.style.color='var(--red)';status.textContent='Erro: '+e.message;
+  }finally{btn.disabled=false;}
 }
 
 function _stockMarginPreview(){
