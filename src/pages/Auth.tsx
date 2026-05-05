@@ -21,6 +21,7 @@ export default function Auth() {
     document.title = "Entrar | GomaPet";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", "Acesse o Dashboard Comercial GomaPet.");
+    (window as any).hideBootLoader?.();
 
     // Fonts
     const link = document.createElement("link");
