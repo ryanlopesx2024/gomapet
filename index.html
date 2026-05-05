@@ -1314,6 +1314,10 @@ function compute(){
   const cpa=D.cpa||(spend/orders);
   S.comp={spend,orders,rev,roas,cpa,margin:D.margin,
     profit:rev*(D.margin/100), avgTkt:rev/orders};
+  // base snapshot sempre atualizado quando dados chegam
+  if(rev>0){window.__baseSnapshot={...S.comp};}
+  // re-aplica filtros se houver
+  if(window.__filters && typeof applyFiltersToKPIs==='function'){applyFiltersToKPIs();}
 }
 
 function updateKPIs(){
