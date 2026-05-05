@@ -2648,7 +2648,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
         if(chip)chip.className='meta-chip ok';
         if(dot)dot.style.background='var(--green)';
       }catch(e){
-        console.warn('Meta fetch failed:',e.message);
+        console.warn('Falha ao buscar dados do Meta Ads:',e.message);
         const chip=document.getElementById('metaChip');
         const dot=document.getElementById('metaDot');
         if(chip)chip.className='meta-chip err';
