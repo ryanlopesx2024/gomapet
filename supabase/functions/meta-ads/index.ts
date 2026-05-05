@@ -9,7 +9,7 @@ const DEFAULT_ACCOUNT = "act_577944235396417";
 const API_VER = "v19.0";
 const BASE = `https://graph.facebook.com/${API_VER}`;
 const CACHE = new Map<string, { t: number; data: any }>();
-const TTL = 7200 * 1000;
+const TTL = 300 * 1000;
 
 const PURCHASE_TYPES = new Set([
   "purchase","omni_purchase","offsite_conversion.fb_pixel_purchase",
