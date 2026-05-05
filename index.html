@@ -3109,12 +3109,15 @@ function applyFiltersToKPIs(){
   }));
   // WhatsApp funnel
   D.whatsapp=(baseD.whatsapp||[]).map(w=>({...w,n:Math.max(0,Math.round((w.n||0)*m))}));
-  // Daily series
-  D.daily=(baseD.daily||[]).map(d=>{
+  // Daily series — usa subset real do período (sem escalar)
+  D.daily=(window.__dailyPeriodSubset||baseD.daily||[]).map(d=>{
     const out={...d};
-    ['rev','spend','conv','msgs','clicks','impr','_pur'].forEach(k=>{
-      if(typeof out[k]==='number')out[k]=k==='rev'||k==='spend'?out[k]*m*(k==='spend'?spendFactor:1):Math.max(0,Math.round(out[k]*m));
-    });
+    // aplica somente filtros não-período (channel/cat/etc) ao subset real
+    const mm=channelM*catM*statusM*sellerM*(spendFactor);
+    if(typeof out._rev==='number')   out._rev   = out._rev*(channelM*catM*statusM*sellerM);
+    if(typeof out._spend==='number') out._spend = out._spend*(channelM*catM*statusM*sellerM)*spendFactor;
+    if(typeof out._pur==='number')   out._pur   = Math.max(0,Math.round(out._pur*(channelM*catM*statusM*sellerM)));
+    if(typeof out._msgs==='number')  out._msgs  = Math.max(0,Math.round(out._msgs*(channelM*catM*statusM*sellerM)));
     return out;
   });
   // Bafisco / Upsell
