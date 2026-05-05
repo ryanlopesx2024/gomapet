@@ -1106,12 +1106,16 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         <div class="card" style="padding:0;overflow:hidden" id="tm-goalBars"></div>
       </div>
       <div class="sec" style="padding-top:0">
-        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
           <span>Ranking Completo</span>
-          <button onclick="openTeamModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Vendedor</button>
+          <div style="display:flex;gap:6px">
+            <button onclick="downloadTeamTemplate()" title="Baixar modelo CSV" style="background:transparent;border:1px solid var(--b);border-radius:8px;color:var(--g1);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-download"></i> Modelo CSV</button>
+            <button onclick="openTeamImport()" style="background:rgba(91,156,246,.12);border:1px solid var(--blue);border-radius:8px;color:var(--blue);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Importar CSV</button>
+            <button onclick="openTeamModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Vendedor</button>
+          </div>
         </div>
-        <div class="card" style="padding:0;overflow:hidden">
-          <table><thead><tr><th>Vendedor</th><th>Atendimentos</th><th>Vendas</th><th>Conversão</th><th>Faturamento</th><th>Ações</th></tr></thead>
+        <div class="card" style="padding:0;overflow:hidden;overflow-x:auto">
+          <table><thead><tr><th>Vendedor</th><th>Função</th><th>Status</th><th>Atend.</th><th>Vendas</th><th>Conv.</th><th>Faturamento</th><th>Meta</th><th>% Meta</th><th>BM / Conta Ads</th><th>Contato</th><th>Ações</th></tr></thead>
           <tbody id="timeTbl"></tbody></table>
         </div>
       </div>
