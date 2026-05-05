@@ -1146,7 +1146,7 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
           <button onclick="openStockModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Item</button>
         </div>
         <div class="card" style="padding:0;overflow:hidden">
-          <table><thead><tr><th>Produto</th><th>Estoque</th><th>Venda/dia</th><th>Dias Restantes</th><th>Reposição Rec.</th><th>Ações</th></tr></thead>
+          <table><thead><tr><th>Produto</th><th>SKU</th><th>Categoria</th><th>Estoque</th><th>Mín.</th><th>Venda/dia</th><th>Dias Rest.</th><th>Custo</th><th>Venda</th><th>Margem</th><th>Fornecedor</th><th>Local</th><th>Status</th><th>Ações</th></tr></thead>
           <tbody id="stTbl"></tbody></table>
         </div>
       </div>
@@ -1253,21 +1253,73 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
 
 <!-- STOCK MODAL -->
 <div id="stockOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeStockModal()">
-  <div class="meta-modal">
+  <div class="meta-modal" style="width:640px;max-height:92vh;overflow-y:auto">
     <h2 id="stockModalTitle">📦 Novo Item de Estoque</h2>
+    <p>Cadastre todas as informações do produto para um controle financeiro e operacional preciso.</p>
     <input type="hidden" id="stockId">
-    <input class="meta-input" id="stockName" placeholder="Nome do produto">
+
+    <!-- Identificação -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-tag"></i> Identificação</div>
+    <input class="meta-input" id="stockName" placeholder="Nome do produto *">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <input class="meta-input" id="stockUnits" type="number" placeholder="Unidades" min="0">
-      <input class="meta-input" id="stockDays" type="number" placeholder="Venda/dia" min="0">
+      <input class="meta-input" id="stockSku" placeholder="SKU / Código">
+      <select class="meta-input" id="stockCategory">
+        <option value="">Categoria…</option>
+        <option value="Suplemento">Suplemento</option>
+        <option value="Ração">Ração</option>
+        <option value="Petisco">Petisco</option>
+        <option value="Higiene">Higiene</option>
+        <option value="Brinquedo">Brinquedo</option>
+        <option value="Acessório">Acessório</option>
+        <option value="Outro">Outro</option>
+      </select>
     </div>
-    <select class="meta-input" id="stockStatus" style="margin-top:8px">
-      <option value="ok">OK</option>
-      <option value="warn">Atenção</option>
-      <option value="crit">Crítico</option>
-    </select>
-    <button class="meta-btn" onclick="saveStock()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
-    <div class="meta-status" id="stockStatus2"></div>
+
+    <!-- Quantidade -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-boxes-stacked"></i> Quantidade & Giro</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <input class="meta-input" id="stockUnits" type="number" placeholder="Unidades em estoque *" min="0">
+      <input class="meta-input" id="stockDays" type="number" placeholder="Venda/dia (giro)" min="0">
+      <input class="meta-input" id="stockMin" type="number" placeholder="Estoque mínimo" min="0">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <select class="meta-input" id="stockUnit">
+        <option value="un">Unidade (un)</option>
+        <option value="kg">Quilograma (kg)</option>
+        <option value="g">Grama (g)</option>
+        <option value="L">Litro (L)</option>
+        <option value="ml">Mililitro (ml)</option>
+        <option value="cx">Caixa (cx)</option>
+        <option value="pct">Pacote (pct)</option>
+      </select>
+      <select class="meta-input" id="stockStatus">
+        <option value="ok">✅ OK — Saudável</option>
+        <option value="warn">⚠️ Atenção</option>
+        <option value="crit">🔴 Crítico</option>
+      </select>
+    </div>
+
+    <!-- Financeiro -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-dollar-sign"></i> Financeiro</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="stockCost" type="number" placeholder="Preço de custo (R$)" min="0" step="0.01">
+      <input class="meta-input" id="stockPrice" type="number" placeholder="Preço de venda (R$)" min="0" step="0.01">
+    </div>
+    <div id="stockMarginPreview" style="margin-top:8px;font-size:11px;color:var(--g1);text-align:right;font-family:'JetBrains Mono',monospace"></div>
+
+    <!-- Logística -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-truck"></i> Logística</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="stockSupplier" placeholder="Fornecedor">
+      <input class="meta-input" id="stockLocation" placeholder="Localização (ex: Prateleira A3)">
+    </div>
+
+    <!-- Observações -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-note-sticky"></i> Observações</div>
+    <textarea class="meta-input" id="stockNotes" placeholder="Notas internas, validade, lote, condições especiais…" rows="2" style="resize:vertical;font-family:'Inter',sans-serif"></textarea>
+
+    <button class="meta-btn" onclick="saveStock()" style="margin-top:18px"><i class="fas fa-save"></i> Salvar Item</button>
+    <div class="meta-status" id="stockStatus2" style="margin-top:8px;font-size:11px;color:var(--red);text-align:center"></div>
     <button onclick="closeStockModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
   </div>
 </div>
@@ -2230,31 +2282,33 @@ function renderTime(){
 function renderEstoque(){
   const maxDays=60;
 
-  // Stock value KPIs
+  // Stock value KPIs (usa preços reais quando disponíveis)
   const svKpis=document.getElementById('stock-value-kpis');
-  if(svKpis&&!svKpis.children.length){
-    const prices={0:179*6,1:149*3,2:149,3:24};
+  if(svKpis){
+    const fallbackPrices={0:179*6,1:149*3,2:149,3:24};
     const totalUnits=D.stock.reduce((a,s)=>a+s.u,0);
-    const totalVal=D.stock.reduce((a,s,i)=>a+s.u*(prices[i]||100),0);
+    const totalCost=D.stock.reduce((a,s,i)=>a+s.u*(s.cost||0),0);
+    const totalSale=D.stock.reduce((a,s,i)=>a+s.u*(s.price||fallbackPrices[i]||100),0);
+    const potencialLucro=totalSale-totalCost;
     const critItems=D.stock.filter(s=>s.s==='crit').length;
     const warnItems=D.stock.filter(s=>s.s==='warn').length;
-    const minDays=Math.min(...D.stock.map(s=>Math.floor(s.u/s.d)));
+    const minDays=D.stock.length?Math.min(...D.stock.map(s=>Math.floor(s.u/(s.d||1)))):0;
+    const giroMedio=D.stock.length?D.stock.reduce((a,s)=>a+s.d,0)/D.stock.length:0;
     svKpis.innerHTML=`
       <div class="card card-p" style="border-left:3px solid var(--green)">
-        <div class="kc-lbl">Valor Total em Estoque</div><div class="kc-val">${fmtBRL(totalVal)}</div>
-        <div class="kc-sub pos">${fmtN(totalUnits)} unidades</div></div>
+        <div class="kc-lbl">Valor de Venda em Estoque</div><div class="kc-val">${fmtBRL(totalSale)}</div>
+        <div class="kc-sub pos">${fmtN(totalUnits)} unidades · ${D.stock.length} SKUs</div></div>
+      <div class="card card-p" style="border-left:3px solid var(--blue)">
+        <div class="kc-lbl">Custo Imobilizado</div><div class="kc-val">${fmtBRL(totalCost)}</div>
+        <div class="kc-sub neu">lucro potencial ${fmtBRL(potencialLucro)}</div></div>
       <div class="card card-p" style="border-left:3px solid var(--red)">
         <div class="kc-lbl">SKUs Críticos</div>
         <div class="kc-val" style="color:var(--red)">${critItems}</div>
         <div class="kc-sub neg">ruptura em ${minDays} dias</div></div>
       <div class="card card-p" style="border-left:3px solid var(--ora)">
-        <div class="kc-lbl">SKUs em Atenção</div>
-        <div class="kc-val" style="color:var(--ora)">${warnItems}</div>
-        <div class="kc-sub warn">monitorar esta semana</div></div>
-      <div class="card card-p" style="border-left:3px solid var(--blue)">
-        <div class="kc-lbl">Giro Médio Diário</div>
-        <div class="kc-val">${fmtN(D.stock.reduce((a,s)=>a+s.d,0)/D.stock.length)} un.</div>
-        <div class="kc-sub neu">todos os SKUs</div></div>`;
+        <div class="kc-lbl">SKUs em Atenção · Giro Médio</div>
+        <div class="kc-val" style="color:var(--ora)">${warnItems} <span style="color:var(--g1);font-size:13px">/ ${giroMedio.toFixed(1)} un./dia</span></div>
+        <div class="kc-sub warn">monitorar esta semana</div></div>`;
   }
 
   // Reorder schedule
@@ -2302,19 +2356,27 @@ function renderEstoque(){
 
   // Table
   document.getElementById('stTbl').innerHTML=D.stock.map(s=>{
-    const days=Math.floor(s.u/s.d);
+    const days=Math.floor(s.u/(s.d||1));
     const col=s.s==='crit'?'var(--red)':s.s==='warn'?'var(--ora)':'var(--green)';
-    const reorder=Math.max(0,30-days);
+    const margin=(s.price>0&&s.cost>0)?((s.price-s.cost)/s.price*100):null;
+    const mCol=margin==null?'var(--g1)':margin>=30?'var(--green)':margin>=15?'var(--ora)':'var(--red)';
+    const belowMin=s.min>0&&s.u<=s.min;
     return`<tr>
       <td><div style="display:flex;align-items:center;gap:8px">
         <span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0"></span>
         <span style="font-weight:600">${s.n}</span></div></td>
-      <td class="mono" style="font-weight:700">${fmtN(s.u)} un.</td>
-      <td class="mono" style="color:var(--g1)">${s.d} un./dia</td>
-      <td class="mono" style="font-weight:700;color:${col}">${days} dias</td>
-      <td style="color:${reorder>0?'var(--red)':'var(--g1)'}">
-        ${reorder>0?`<span class="mono" style="font-weight:700">Repor em ${reorder}d</span>`:'<span style="color:var(--green)">✓ OK</span>'}
-      </td>
+      <td class="mono" style="color:var(--g1);font-size:10px">${s.sku||'—'}</td>
+      <td style="font-size:10px">${s.cat?`<span class="badge" style="background:rgba(91,156,246,.15);color:var(--blue);border:1px solid rgba(91,156,246,.3)">${s.cat}</span>`:'<span style="color:var(--g1)">—</span>'}</td>
+      <td class="mono" style="font-weight:700">${fmtN(s.u)} ${s.unit||'un'}</td>
+      <td class="mono" style="color:${belowMin?'var(--red)':'var(--g1)'};font-size:10px">${s.min||'—'}</td>
+      <td class="mono" style="color:var(--g1)">${s.d}/dia</td>
+      <td class="mono" style="font-weight:700;color:${col}">${days}d</td>
+      <td class="mono" style="color:var(--g1)">${s.cost?fmtBRL(s.cost):'—'}</td>
+      <td class="mono" style="font-weight:600">${s.price?fmtBRL(s.price):'—'}</td>
+      <td class="mono" style="font-weight:700;color:${mCol}">${margin==null?'—':margin.toFixed(0)+'%'}</td>
+      <td style="color:var(--g1);font-size:10px">${s.sup||'—'}</td>
+      <td style="color:var(--g1);font-size:10px">${s.loc||'—'}</td>
+      <td><span class="badge ${s.s==='crit'?'b-r':s.s==='warn'?'b-o':'b-g'}">${s.s==='crit'?'Crítico':s.s==='warn'?'Atenção':'OK'}</span></td>
       <td><div style="display:flex;gap:6px"><button onclick="editStock('${s.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--cream);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-pen"></i></button><button onclick="deleteStock('${s.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--red);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-trash"></i></button></div></td>
     </tr>`;}).join('');
 
@@ -2890,7 +2952,12 @@ async function loadTeam(){
 async function loadStock(){
   try{
     const rows=await sbReq('stock_items?select=*&order=units.asc');
-    D.stock=rows.map(r=>({id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status}));
+    D.stock=rows.map(r=>({
+      id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status,
+      sku:r.sku||'',cat:r.category||'',sup:r.supplier||'',
+      cost:Number(r.cost_price)||0,price:Number(r.sale_price)||0,
+      min:r.min_stock||0,loc:r.location||'',unit:r.unit||'un',notes:r.notes||''
+    }));
     if(document.querySelector('.nav.on')?.dataset.pg==='estoque') renderEstoque();
   }catch(e){console.warn('Falha ao carregar estoque:',e);}
 }
@@ -2936,12 +3003,31 @@ async function saveTeam(){
   }catch(e){document.getElementById('teamStatus').textContent='Erro: '+e.message;}
 }
 
+function _stockMarginPreview(){
+  const cost=parseFloat(document.getElementById('stockCost').value)||0;
+  const price=parseFloat(document.getElementById('stockPrice').value)||0;
+  const units=parseInt(document.getElementById('stockUnits').value)||0;
+  const el=document.getElementById('stockMarginPreview'); if(!el)return;
+  if(price>0&&cost>0){
+    const m=((price-cost)/price*100);
+    const lucroUn=price-cost;
+    const valorEstoque=cost*units;
+    el.innerHTML=`Margem: <b style="color:${m>=30?'#29B347':m>=15?'#f0a030':'#e84455'}">${m.toFixed(1)}%</b> · Lucro/un: <b>R$ ${lucroUn.toFixed(2)}</b> · Valor em estoque: <b>R$ ${valorEstoque.toFixed(2)}</b>`;
+  } else el.textContent='';
+}
 function openStockModal(id){
   document.getElementById('stockOverlay').style.display='flex';
-  document.getElementById('stockModalTitle').textContent=id?'✏️ Editar Item':'📦 Novo Item de Estoque';
-  ['stockId','stockName','stockUnits','stockDays'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('stockModalTitle').textContent=id?'✏️ Editar Item de Estoque':'📦 Novo Item de Estoque';
+  ['stockId','stockName','stockUnits','stockDays','stockSku','stockSupplier','stockCost','stockPrice','stockMin','stockLocation','stockNotes'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
   document.getElementById('stockStatus').value='ok';
+  document.getElementById('stockCategory').value='';
+  document.getElementById('stockUnit').value='un';
   document.getElementById('stockStatus2').textContent='';
+  document.getElementById('stockMarginPreview').textContent='';
+  ['stockCost','stockPrice','stockUnits'].forEach(x=>{
+    const e=document.getElementById(x);
+    if(e&&!e.dataset.boundPreview){e.addEventListener('input',_stockMarginPreview);e.dataset.boundPreview='1';}
+  });
   if(id){
     const s=D.stock.find(x=>x.id===id); if(!s)return;
     document.getElementById('stockId').value=id;
@@ -2949,6 +3035,16 @@ function openStockModal(id){
     document.getElementById('stockUnits').value=s.u;
     document.getElementById('stockDays').value=s.d;
     document.getElementById('stockStatus').value=s.s;
+    document.getElementById('stockSku').value=s.sku||'';
+    document.getElementById('stockCategory').value=s.cat||'';
+    document.getElementById('stockSupplier').value=s.sup||'';
+    document.getElementById('stockCost').value=s.cost||'';
+    document.getElementById('stockPrice').value=s.price||'';
+    document.getElementById('stockMin').value=s.min||'';
+    document.getElementById('stockLocation').value=s.loc||'';
+    document.getElementById('stockUnit').value=s.unit||'un';
+    document.getElementById('stockNotes').value=s.notes||'';
+    _stockMarginPreview();
   }
 }
 function closeStockModal(){document.getElementById('stockOverlay').style.display='none';}
@@ -2959,13 +3055,24 @@ async function deleteStock(id){
 }
 async function saveStock(){
   const id=document.getElementById('stockId').value;
+  const v=x=>document.getElementById(x).value;
   const payload={
-    name:document.getElementById('stockName').value.trim(),
-    units:parseInt(document.getElementById('stockUnits').value)||0,
-    days_left:parseInt(document.getElementById('stockDays').value)||0,
-    status:document.getElementById('stockStatus').value
+    name:v('stockName').trim(),
+    units:parseInt(v('stockUnits'))||0,
+    days_left:parseInt(v('stockDays'))||0,
+    status:v('stockStatus'),
+    sku:v('stockSku').trim()||null,
+    category:v('stockCategory')||null,
+    supplier:v('stockSupplier').trim()||null,
+    cost_price:parseFloat(v('stockCost'))||0,
+    sale_price:parseFloat(v('stockPrice'))||0,
+    min_stock:parseInt(v('stockMin'))||0,
+    location:v('stockLocation').trim()||null,
+    unit:v('stockUnit')||'un',
+    notes:v('stockNotes').trim()||null
   };
-  if(!payload.name){document.getElementById('stockStatus2').textContent='Preencha o nome';return;}
+  if(!payload.name){document.getElementById('stockStatus2').textContent='⚠️ Preencha o nome do produto';return;}
+  if(payload.units<0){document.getElementById('stockStatus2').textContent='⚠️ Unidades não pode ser negativo';return;}
   try{
     if(id) await sbReq(`stock_items?id=eq.${id}`,'PATCH',payload);
     else await sbReq('stock_items','POST',payload);
