@@ -175,21 +175,60 @@ async function buildPayload(accountId: string) {
   };
 }
 
+function normalizeAccountId(raw: string): string | null {
+  const s = (raw||"").trim();
+  if (!s) return null;
+  const withPrefix = s.startsWith("act_") ? s : `act_${s.replace(/\D/g,"")}`;
+  return /^act_\d{6,}$/.test(withPrefix) ? withPrefix : null;
+}
+
+async function validateAccount(accountId: string): Promise<{ok:true;account:any}|{ok:false;error:string;status:number}> {
+  try {
+    const acct = await metaGet(accountId, { fields: "id,name,currency,timezone_name,account_status" });
+    if (!acct?.id) return { ok:false, error:"Conta não encontrada", status:404 };
+    if (acct.account_status && acct.account_status !== 1) {
+      return { ok:false, error:`Conta inativa (status ${acct.account_status})`, status:403 };
+    }
+    return { ok:true, account: acct };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("400") || msg.includes("404")) return { ok:false, error:`Ad Account ID inválido ou sem acesso: ${accountId}`, status:400 };
+    if (msg.includes("403")) return { ok:false, error:`Token sem permissão para a conta ${accountId}`, status:403 };
+    return { ok:false, error: msg, status:502 };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (!TOKEN) return new Response(JSON.stringify({ ok:false, error:"META_TOKEN not configured" }), { status:500, headers:{...corsHeaders,"Content-Type":"application/json"} });
+  const json = (body:any, status=200) => new Response(JSON.stringify(body), { status, headers:{...corsHeaders,"Content-Type":"application/json"} });
+  if (!TOKEN) return json({ ok:false, error:"META_TOKEN not configured" }, 500);
   try {
     const url = new URL(req.url);
-    const accountId = url.searchParams.get("account_id") || DEFAULT_ACCOUNT;
+    const action = url.searchParams.get("action"); // "validate" | null
+    const rawId = url.searchParams.get("account_id") || DEFAULT_ACCOUNT;
+    const accountId = normalizeAccountId(rawId);
+    if (!accountId) return json({ ok:false, error:`Formato inválido. Use act_XXXXXXXXXX (recebido: "${rawId}")` }, 400);
+
+    if (action === "validate") {
+      const v = await validateAccount(accountId);
+      if (!v.ok) return json({ ok:false, error:v.error, account_id:accountId }, v.status);
+      return json({ ok:true, account_id:accountId, account:v.account });
+    }
+
     const force = url.searchParams.has("force");
     const key = `meta_${accountId}`;
     if (force) CACHE.delete(key);
     const cached = CACHE.get(key);
-    let data;
-    if (cached && Date.now()-cached.t < TTL) data = cached.data;
-    else { data = await buildPayload(accountId); CACHE.set(key, { t: Date.now(), data }); }
-    return new Response(JSON.stringify(data), { headers: {...corsHeaders,"Content-Type":"application/json"} });
+    if (cached && Date.now()-cached.t < TTL) return json(cached.data);
+
+    // valida antes de montar payload completo
+    const v = await validateAccount(accountId);
+    if (!v.ok) return json({ ok:false, error:v.error, account_id:accountId }, v.status);
+
+    const data = await buildPayload(accountId);
+    CACHE.set(key, { t: Date.now(), data });
+    return json(data);
   } catch (e) {
-    return new Response(JSON.stringify({ ok:false, error: e instanceof Error ? e.message : String(e) }), { status:502, headers:{...corsHeaders,"Content-Type":"application/json"} });
+    return json({ ok:false, error: e instanceof Error ? e.message : String(e) }, 502);
   }
 });
