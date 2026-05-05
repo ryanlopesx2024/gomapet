@@ -227,8 +227,8 @@ Deno.serve(async (req) => {
 
     if (action === "validate") {
       const v = await validateAccount(accountId);
-      if (!v.ok) return json({ ok:false, error:v.error, account_id:accountId }, v.status);
-      return json({ ok:true, account_id:accountId, account:v.account });
+      if (!v.ok) return json({ ok:false, error:v.error, account_id:accountId, permissions:v.permissions, missing:v.missing }, v.status);
+      return json({ ok:true, account_id:accountId, account:v.account, permissions:v.permissions });
     }
 
     const force = url.searchParams.has("force");
