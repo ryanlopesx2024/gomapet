@@ -2704,7 +2704,7 @@ async function loadStock(){
     const rows=await sbReq('stock_items?select=*&order=units.asc');
     D.stock=rows.map(r=>({id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status}));
     if(document.querySelector('.nav.on')?.dataset.pg==='estoque') renderEstoque();
-  }catch(e){console.warn('loadStock',e);}
+  }catch(e){console.warn('Falha ao carregar estoque:',e);}
 }
 
 function openTeamModal(id){
