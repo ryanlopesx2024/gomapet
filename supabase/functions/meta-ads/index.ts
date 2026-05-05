@@ -9,7 +9,7 @@ const DEFAULT_ACCOUNT = "act_577944235396417";
 const API_VER = "v19.0";
 const BASE = `https://graph.facebook.com/${API_VER}`;
 const CACHE = new Map<string, { t: number; data: any }>();
-const TTL = 7200 * 1000;
+const TTL = 300 * 1000;
 
 const PURCHASE_TYPES = new Set([
   "purchase","omni_purchase","offsite_conversion.fb_pixel_purchase",
@@ -68,9 +68,13 @@ function segAgg(list: any[]) {
 
 async function buildPayload(accountId: string) {
   const act = accountId.startsWith("act_") ? accountId : `act_${accountId}`;
+  const _today = new Date();
+  const _since30 = new Date(_today.getTime() - 29*86400000);
+  const _fmt = (d: Date) => d.toISOString().slice(0,10);
+  const TIME_RANGE = JSON.stringify({ since: _fmt(_since30), until: _fmt(_today) });
   const acct = await metaGet(act, { fields: "id,name,currency,timezone_name" });
   const acctIns = (await metaGet(`${act}/insights`, {
-    date_preset: "last_30d", level: "account",
+    time_range: TIME_RANGE, level: "account",
     fields: "spend,impressions,clicks,ctr,cpc,actions,action_values,purchase_roas",
   })).data[0];
 
@@ -104,7 +108,7 @@ async function buildPayload(accountId: string) {
   ];
 
   const campsRaw = (await metaGet(`${act}/insights`, {
-    date_preset: "last_30d", level: "campaign",
+    time_range: TIME_RANGE, level: "campaign",
     fields: "campaign_name,campaign_id,spend,impressions,clicks,ctr,cpc,actions,action_values,purchase_roas",
     limit: 30,
   })).data;
@@ -135,11 +139,8 @@ async function buildPayload(accountId: string) {
     (camp as any).seg = segmentCamp(raw.campaign_name||"");
   }
 
-  const _today = new Date();
-  const _since = new Date(_today.getTime() - 29*86400000);
-  const _fmt = (d: Date) => d.toISOString().slice(0,10);
   const dailyRaw = (await metaGet(`${act}/insights`, {
-    time_range: JSON.stringify({ since: _fmt(_since), until: _fmt(_today) }),
+    time_range: TIME_RANGE,
     level: "account", time_increment: 1,
     fields: "date_start,spend,actions,action_values", limit: 31,
   })).data;
