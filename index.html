@@ -1112,6 +1112,48 @@ td{padding:10px 14px;font-size:12.5px;}
   </div>
 </div>
 
+<!-- TEAM MODAL -->
+<div id="teamOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeTeamModal()">
+  <div class="meta-modal">
+    <h2 id="teamModalTitle">👤 Novo Vendedor</h2>
+    <input type="hidden" id="teamId">
+    <input class="meta-input" id="teamName" placeholder="Nome completo">
+    <input class="meta-input" id="teamInitials" placeholder="Iniciais (ex: CF)" maxlength="3" style="margin-top:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="teamSales" type="number" placeholder="Atendimentos" min="0">
+      <input class="meta-input" id="teamConv" type="number" placeholder="Vendas" min="0">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="teamRevenue" type="number" placeholder="Faturamento" min="0" step="0.01">
+      <input class="meta-input" id="teamColor" type="color" value="#29B347" style="padding:4px;height:38px">
+    </div>
+    <button class="meta-btn" onclick="saveTeam()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
+    <div class="meta-status" id="teamStatus"></div>
+    <button onclick="closeTeamModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
+<!-- STOCK MODAL -->
+<div id="stockOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeStockModal()">
+  <div class="meta-modal">
+    <h2 id="stockModalTitle">📦 Novo Item de Estoque</h2>
+    <input type="hidden" id="stockId">
+    <input class="meta-input" id="stockName" placeholder="Nome do produto">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="stockUnits" type="number" placeholder="Unidades" min="0">
+      <input class="meta-input" id="stockDays" type="number" placeholder="Venda/dia" min="0">
+    </div>
+    <select class="meta-input" id="stockStatus" style="margin-top:8px">
+      <option value="ok">OK</option>
+      <option value="warn">Atenção</option>
+      <option value="crit">Crítico</option>
+    </select>
+    <button class="meta-btn" onclick="saveStock()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
+    <div class="meta-status" id="stockStatus2"></div>
+    <button onclick="closeStockModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
 <div id="toasts"></div>
 <!-- LOADING SCREEN -->
 
