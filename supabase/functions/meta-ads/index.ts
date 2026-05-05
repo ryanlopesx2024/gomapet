@@ -139,11 +139,8 @@ async function buildPayload(accountId: string) {
     (camp as any).seg = segmentCamp(raw.campaign_name||"");
   }
 
-  const _today = new Date();
-  const _since = new Date(_today.getTime() - 29*86400000);
-  const _fmt = (d: Date) => d.toISOString().slice(0,10);
   const dailyRaw = (await metaGet(`${act}/insights`, {
-    time_range: JSON.stringify({ since: _fmt(_since), until: _fmt(_today) }),
+    time_range: TIME_RANGE,
     level: "account", time_increment: 1,
     fields: "date_start,spend,actions,action_values", limit: 31,
   })).data;
