@@ -1328,6 +1328,36 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
   </div>
 </div>
 
+<!-- STOCK IMPORT CSV MODAL -->
+<div id="stockImportOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeStockImport()">
+  <div class="meta-modal" style="width:640px;max-height:92vh;overflow-y:auto">
+    <h2>📥 Importar Estoque via CSV</h2>
+    <p>Faça upload de um arquivo CSV para cadastrar vários itens de uma vez. Use o <b style="color:var(--green);cursor:pointer" onclick="downloadStockTemplate()">modelo CSV</b> para garantir as colunas corretas.</p>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-list"></i> Colunas aceitas</div>
+    <div style="font-size:11px;color:var(--g1);background:var(--bg2);border:1px solid var(--b);border-radius:8px;padding:10px;line-height:1.6">
+      <b style="color:var(--w)">Obrigatório:</b> name<br>
+      <b style="color:var(--w)">Opcional:</b> sku, category, supplier, units, days_left, min_stock, cost_price, sale_price, location, unit, status, notes
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Arquivo</div>
+    <input type="file" id="stockCsvFile" accept=".csv,text/csv" class="meta-input" style="padding:8px;cursor:pointer">
+
+    <div id="stockImportPreview" style="margin-top:12px;font-size:11px;color:var(--g1);max-height:200px;overflow:auto"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <label style="font-size:11px;color:var(--g1);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="stockImportReplace"> Substituir todo o estoque atual
+      </label>
+      <div style="font-size:10px;color:var(--g1);text-align:right">Separador: vírgula <b>,</b> ou ponto-e-vírgula <b>;</b></div>
+    </div>
+
+    <button class="meta-btn" id="stockImportBtn" onclick="runStockImport()" style="margin-top:14px"><i class="fas fa-upload"></i> Importar Itens</button>
+    <div class="meta-status" id="stockImportStatus" style="margin-top:8px;font-size:11px;text-align:center"></div>
+    <button onclick="closeStockImport()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
 <div id="toasts"></div>
 <!-- LOADING SCREEN -->
 
