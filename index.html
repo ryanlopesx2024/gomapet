@@ -2942,7 +2942,12 @@ async function loadTeam(){
 async function loadStock(){
   try{
     const rows=await sbReq('stock_items?select=*&order=units.asc');
-    D.stock=rows.map(r=>({id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status}));
+    D.stock=rows.map(r=>({
+      id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status,
+      sku:r.sku||'',cat:r.category||'',sup:r.supplier||'',
+      cost:Number(r.cost_price)||0,price:Number(r.sale_price)||0,
+      min:r.min_stock||0,loc:r.location||'',unit:r.unit||'un',notes:r.notes||''
+    }));
     if(document.querySelector('.nav.on')?.dataset.pg==='estoque') renderEstoque();
   }catch(e){console.warn('Falha ao carregar estoque:',e);}
 }
