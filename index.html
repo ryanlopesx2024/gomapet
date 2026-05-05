@@ -403,11 +403,15 @@ td{padding:10px 14px;font-size:12.5px;}
 @media(max-width:1100px){.g4{grid-template-columns:1fr 1fr;}.g5{grid-template-columns:1fr 1fr 1fr;}}
 @media(max-width:900px){.g3{grid-template-columns:1fr 1fr;}}
 @media(max-width:768px){.sb{display:none;}.main{width:100%;}.g4,.g3,.g2,.g5{grid-template-columns:1fr;}}
+html.auth-route #root{display:block!important;min-height:100vh;}
+html.auth-route .sb,html.auth-route .main{display:none!important;}
 </style>
 <script>
 /* Auth guard — redireciona para /auth se não houver sessão válida */
 (function(){
   try{
+    var isAuthRoute = window.location.pathname === '/auth' || window.location.pathname === '/reset-password';
+    if(isAuthRoute){ document.documentElement.classList.add('auth-route'); return; }
     var key = Object.keys(localStorage).find(function(k){return k.indexOf('sb-')===0 && k.indexOf('-auth-token')>0;});
     var ok = false;
     if(key){
