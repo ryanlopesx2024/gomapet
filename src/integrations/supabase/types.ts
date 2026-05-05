@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      sales_team: {
+        Row: {
+          color: string
+          conversions: number
+          created_at: string
+          id: string
+          initials: string
+          name: string
+          revenue: number
+          sales: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          conversions?: number
+          created_at?: string
+          id?: string
+          initials: string
+          name: string
+          revenue?: number
+          sales?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          conversions?: number
+          created_at?: string
+          id?: string
+          initials?: string
+          name?: string
+          revenue?: number
+          sales?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_items: {
+        Row: {
+          created_at: string
+          days_left: number
+          id: string
+          name: string
+          status: string
+          units: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          days_left?: number
+          id?: string
+          name: string
+          status?: string
+          units?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          days_left?: number
+          id?: string
+          name?: string
+          status?: string
+          units?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

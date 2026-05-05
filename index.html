@@ -988,9 +988,12 @@ td{padding:10px 14px;font-size:12.5px;}
         <div class="card" style="padding:0;overflow:hidden" id="tm-goalBars"></div>
       </div>
       <div class="sec" style="padding-top:0">
-        <div class="sec-title">Ranking Completo</div>
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Ranking Completo</span>
+          <button onclick="openTeamModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Vendedor</button>
+        </div>
         <div class="card" style="padding:0;overflow:hidden">
-          <table><thead><tr><th>Vendedor</th><th>Atendimentos</th><th>Vendas</th><th>Conversão</th><th>Faturamento</th><th>Status</th></tr></thead>
+          <table><thead><tr><th>Vendedor</th><th>Atendimentos</th><th>Vendas</th><th>Conversão</th><th>Faturamento</th><th>Ações</th></tr></thead>
           <tbody id="timeTbl"></tbody></table>
         </div>
       </div>
@@ -1020,9 +1023,12 @@ td{padding:10px 14px;font-size:12.5px;}
         </div>
       </div>
       <div class="sec" style="padding-top:0">
-        <div class="sec-title">Tabela de Estoque Detalhada</div>
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Tabela de Estoque Detalhada</span>
+          <button onclick="openStockModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Item</button>
+        </div>
         <div class="card" style="padding:0;overflow:hidden">
-          <table><thead><tr><th>Produto</th><th>Estoque</th><th>Venda/dia</th><th>Dias Restantes</th><th>Reposição Rec.</th><th>Status</th></tr></thead>
+          <table><thead><tr><th>Produto</th><th>Estoque</th><th>Venda/dia</th><th>Dias Restantes</th><th>Reposição Rec.</th><th>Ações</th></tr></thead>
           <tbody id="stTbl"></tbody></table>
         </div>
       </div>
@@ -1103,6 +1109,48 @@ td{padding:10px 14px;font-size:12.5px;}
       </div>
     </div>
     <button onclick="closeMetaModal()" style="margin-top:14px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
+<!-- TEAM MODAL -->
+<div id="teamOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeTeamModal()">
+  <div class="meta-modal">
+    <h2 id="teamModalTitle">👤 Novo Vendedor</h2>
+    <input type="hidden" id="teamId">
+    <input class="meta-input" id="teamName" placeholder="Nome completo">
+    <input class="meta-input" id="teamInitials" placeholder="Iniciais (ex: CF)" maxlength="3" style="margin-top:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="teamSales" type="number" placeholder="Atendimentos" min="0">
+      <input class="meta-input" id="teamConv" type="number" placeholder="Vendas" min="0">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="teamRevenue" type="number" placeholder="Faturamento" min="0" step="0.01">
+      <input class="meta-input" id="teamColor" type="color" value="#29B347" style="padding:4px;height:38px">
+    </div>
+    <button class="meta-btn" onclick="saveTeam()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
+    <div class="meta-status" id="teamStatus"></div>
+    <button onclick="closeTeamModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
+<!-- STOCK MODAL -->
+<div id="stockOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeStockModal()">
+  <div class="meta-modal">
+    <h2 id="stockModalTitle">📦 Novo Item de Estoque</h2>
+    <input type="hidden" id="stockId">
+    <input class="meta-input" id="stockName" placeholder="Nome do produto">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="stockUnits" type="number" placeholder="Unidades" min="0">
+      <input class="meta-input" id="stockDays" type="number" placeholder="Venda/dia" min="0">
+    </div>
+    <select class="meta-input" id="stockStatus" style="margin-top:8px">
+      <option value="ok">OK</option>
+      <option value="warn">Atenção</option>
+      <option value="crit">Crítico</option>
+    </select>
+    <button class="meta-btn" onclick="saveStock()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
+    <div class="meta-status" id="stockStatus2"></div>
+    <button onclick="closeStockModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
   </div>
 </div>
 
@@ -2001,7 +2049,7 @@ function renderTime(){
       <td><div class="cvbar"><div class="cvtrack"><div class="cvfill" style="background:${p.c<goal?'var(--red)':'var(--green)'}" data-w="${Math.min(p.c,100)}"></div></div>
         <span class="mono" style="font-size:11px;color:${p.c<goal?'var(--red)':'var(--green)'}">${p.c}%</span></div></td>
       <td class="mono" style="font-weight:700;color:${p.col}">${fmtBRL(p.r)}</td>
-      <td><span class="badge ${p.c<goal?'b-r':'b-g'}">${p.c<goal?'Abaixo':'✓ Meta'}</span></td>
+      <td><div style="display:flex;gap:6px"><button onclick="editTeam('${p.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--cream);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-pen"></i></button><button onclick="deleteTeam('${p.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--red);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-trash"></i></button></div></td>
     </tr>`).join('');
 
   // Detail cards
@@ -2144,7 +2192,7 @@ function renderEstoque(){
       <td style="color:${reorder>0?'var(--red)':'var(--g1)'}">
         ${reorder>0?`<span class="mono" style="font-weight:700">Repor em ${reorder}d</span>`:'<span style="color:var(--green)">✓ OK</span>'}
       </td>
-      <td><span class="badge ${s.s==='crit'?'b-r':s.s==='warn'?'b-o':'b-g'}">${s.s==='crit'?'Crítico':s.s==='warn'?'Atenção':'Saudável'}</span></td>
+      <td><div style="display:flex;gap:6px"><button onclick="editStock('${s.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--cream);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-pen"></i></button><button onclick="deleteStock('${s.id}')" style="background:transparent;border:1px solid var(--b);border-radius:6px;color:var(--red);padding:3px 8px;font-size:10px;cursor:pointer"><i class="fas fa-trash"></i></button></div></td>
     </tr>`;}).join('');
 
   if(CH.burndown||typeof Chart==='undefined')return;
@@ -2584,7 +2632,114 @@ window.addEventListener('DOMContentLoaded',async()=>{
       fetch(u).then(r=>r.json()).then(d=>{if(d.ok){META.lastData=d;applyMetaData(d);}}).catch(()=>{});
     },60000);
   }
+  await loadTeam(); await loadStock();
+  setInterval(()=>{loadTeam();loadStock();},15000);
 });
+
+/* ═══ TIME + ESTOQUE — CRUD via Supabase REST ═══════════════ */
+const SB_URL='https://xfgfalglgfamavemedew.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
+const sbHeaders=()=>({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'});
+
+async function sbReq(path,method='GET',body){
+  const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method,headers:sbHeaders(),body:body?JSON.stringify(body):undefined});
+  if(!r.ok) throw new Error(await r.text());
+  return r.status===204?null:await r.json();
+}
+
+async function loadTeam(){
+  try{
+    const rows=await sbReq('sales_team?select=*&order=revenue.desc');
+    D.team=rows.map(r=>({id:r.id,n:r.name,i:r.initials,s:r.sales,c:r.sales?Math.round(r.conversions/r.sales*100):0,r:Number(r.revenue),col:r.color,_conv:r.conversions}));
+    D.teamGoal=D.team.length?Math.max(20,Math.round(D.team.reduce((a,p)=>a+p.c,0)/D.team.length)):40;
+    if(document.querySelector('.nav.on')?.dataset.pg==='time') renderTime();
+  }catch(e){console.warn('loadTeam',e);}
+}
+async function loadStock(){
+  try{
+    const rows=await sbReq('stock_items?select=*&order=units.asc');
+    D.stock=rows.map(r=>({id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status}));
+    if(document.querySelector('.nav.on')?.dataset.pg==='estoque') renderEstoque();
+  }catch(e){console.warn('loadStock',e);}
+}
+
+function openTeamModal(id){
+  document.getElementById('teamOverlay').style.display='flex';
+  document.getElementById('teamModalTitle').textContent=id?'✏️ Editar Vendedor':'👤 Novo Vendedor';
+  ['teamId','teamName','teamInitials','teamSales','teamConv','teamRevenue'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('teamColor').value='#29B347';
+  document.getElementById('teamStatus').textContent='';
+  if(id){
+    const p=D.team.find(x=>x.id===id); if(!p)return;
+    document.getElementById('teamId').value=id;
+    document.getElementById('teamName').value=p.n;
+    document.getElementById('teamInitials').value=p.i;
+    document.getElementById('teamSales').value=p.s;
+    document.getElementById('teamConv').value=p._conv;
+    document.getElementById('teamRevenue').value=p.r;
+    document.getElementById('teamColor').value=p.col;
+  }
+}
+function closeTeamModal(){document.getElementById('teamOverlay').style.display='none';}
+function editTeam(id){openTeamModal(id);}
+async function deleteTeam(id){
+  if(!confirm('Excluir este vendedor?'))return;
+  try{await sbReq(`sales_team?id=eq.${id}`,'DELETE'); await loadTeam();}catch(e){alert('Erro: '+e.message);}
+}
+async function saveTeam(){
+  const id=document.getElementById('teamId').value;
+  const payload={
+    name:document.getElementById('teamName').value.trim(),
+    initials:document.getElementById('teamInitials').value.trim().toUpperCase(),
+    sales:parseInt(document.getElementById('teamSales').value)||0,
+    conversions:parseInt(document.getElementById('teamConv').value)||0,
+    revenue:parseFloat(document.getElementById('teamRevenue').value)||0,
+    color:document.getElementById('teamColor').value
+  };
+  if(!payload.name||!payload.initials){document.getElementById('teamStatus').textContent='Preencha nome e iniciais';return;}
+  try{
+    if(id) await sbReq(`sales_team?id=eq.${id}`,'PATCH',payload);
+    else await sbReq('sales_team','POST',payload);
+    await loadTeam(); closeTeamModal();
+  }catch(e){document.getElementById('teamStatus').textContent='Erro: '+e.message;}
+}
+
+function openStockModal(id){
+  document.getElementById('stockOverlay').style.display='flex';
+  document.getElementById('stockModalTitle').textContent=id?'✏️ Editar Item':'📦 Novo Item de Estoque';
+  ['stockId','stockName','stockUnits','stockDays'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('stockStatus').value='ok';
+  document.getElementById('stockStatus2').textContent='';
+  if(id){
+    const s=D.stock.find(x=>x.id===id); if(!s)return;
+    document.getElementById('stockId').value=id;
+    document.getElementById('stockName').value=s.n;
+    document.getElementById('stockUnits').value=s.u;
+    document.getElementById('stockDays').value=s.d;
+    document.getElementById('stockStatus').value=s.s;
+  }
+}
+function closeStockModal(){document.getElementById('stockOverlay').style.display='none';}
+function editStock(id){openStockModal(id);}
+async function deleteStock(id){
+  if(!confirm('Excluir este item?'))return;
+  try{await sbReq(`stock_items?id=eq.${id}`,'DELETE'); await loadStock();}catch(e){alert('Erro: '+e.message);}
+}
+async function saveStock(){
+  const id=document.getElementById('stockId').value;
+  const payload={
+    name:document.getElementById('stockName').value.trim(),
+    units:parseInt(document.getElementById('stockUnits').value)||0,
+    days_left:parseInt(document.getElementById('stockDays').value)||0,
+    status:document.getElementById('stockStatus').value
+  };
+  if(!payload.name){document.getElementById('stockStatus2').textContent='Preencha o nome';return;}
+  try{
+    if(id) await sbReq(`stock_items?id=eq.${id}`,'PATCH',payload);
+    else await sbReq('stock_items','POST',payload);
+    await loadStock(); closeStockModal();
+  }catch(e){document.getElementById('stockStatus2').textContent='Erro: '+e.message;}
+}
 </script>
 <script type="module" src="/src/main.tsx"></script></body>
 </html>
