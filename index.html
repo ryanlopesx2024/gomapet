@@ -2697,7 +2697,7 @@ async function loadTeam(){
     D.team=rows.map(r=>({id:r.id,n:r.name,i:r.initials,s:r.sales,c:r.sales?Math.round(r.conversions/r.sales*100):0,r:Number(r.revenue),col:r.color,_conv:r.conversions}));
     D.teamGoal=D.team.length?Math.max(20,Math.round(D.team.reduce((a,p)=>a+p.c,0)/D.team.length)):40;
     if(document.querySelector('.nav.on')?.dataset.pg==='time') renderTime();
-  }catch(e){console.warn('loadTeam',e);}
+  }catch(e){console.warn('Falha ao carregar equipe de vendas:',e);}
 }
 async function loadStock(){
   try{
