@@ -1240,22 +1240,100 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
 
 <!-- TEAM MODAL -->
 <div id="teamOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeTeamModal()">
-  <div class="meta-modal">
+  <div class="meta-modal" style="width:680px;max-height:92vh;overflow-y:auto">
     <h2 id="teamModalTitle">👤 Novo Vendedor</h2>
+    <p>Cadastre o vendedor com todas as informações necessárias para alocar BMs/contas de anúncios e acompanhar metas.</p>
     <input type="hidden" id="teamId">
-    <input class="meta-input" id="teamName" placeholder="Nome completo">
-    <input class="meta-input" id="teamInitials" placeholder="Iniciais (ex: CF)" maxlength="3" style="margin-top:8px">
+
+    <!-- Identificação -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-id-badge"></i> Identificação</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+      <input class="meta-input" id="teamName" placeholder="Nome completo *">
+      <input class="meta-input" id="teamInitials" placeholder="Iniciais (ex: CF) *" maxlength="3">
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <select class="meta-input" id="teamRole">
+        <option value="">Função…</option>
+        <option value="SDR">SDR</option>
+        <option value="Closer">Closer</option>
+        <option value="Vendedor">Vendedor</option>
+        <option value="Gestor de Tráfego">Gestor de Tráfego</option>
+        <option value="Coordenador">Coordenador</option>
+        <option value="Gerente">Gerente</option>
+      </select>
+      <select class="meta-input" id="teamStatusF">
+        <option value="active">🟢 Ativo</option>
+        <option value="paused">🟡 Pausado</option>
+        <option value="vacation">🌴 Férias</option>
+        <option value="inactive">🔴 Inativo</option>
+      </select>
+    </div>
+
+    <!-- Contato -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-address-book"></i> Contato</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="teamEmail" type="email" placeholder="E-mail">
+      <input class="meta-input" id="teamPhone" placeholder="Telefone / WhatsApp">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <input class="meta-input" id="teamRegion" placeholder="Região / Equipe (ex: SP-Norte)">
+      <input class="meta-input" id="teamHired" type="date" placeholder="Data de admissão">
+    </div>
+
+    <!-- BM / Tráfego -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fab fa-facebook"></i> BM & Conta de Anúncios</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="teamBm" placeholder="Nome da BM (ex: BM Principal)">
+      <input class="meta-input" id="teamAdAccount" placeholder="ID da conta (act_123456789)">
+    </div>
+
+    <!-- Performance -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-chart-line"></i> Performance & Meta</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       <input class="meta-input" id="teamSales" type="number" placeholder="Atendimentos" min="0">
       <input class="meta-input" id="teamConv" type="number" placeholder="Vendas" min="0">
+      <input class="meta-input" id="teamRevenue" type="number" placeholder="Faturamento (R$)" min="0" step="0.01">
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <input class="meta-input" id="teamRevenue" type="number" placeholder="Faturamento" min="0" step="0.01">
-      <input class="meta-input" id="teamColor" type="color" value="#29B347" style="padding:4px;height:38px">
+    <div style="display:grid;grid-template-columns:1fr 100px;gap:8px;margin-top:8px;align-items:center">
+      <input class="meta-input" id="teamGoal" type="number" placeholder="Meta de faturamento (R$)" min="0" step="0.01">
+      <input class="meta-input" id="teamColor" type="color" value="#29B347" style="padding:4px;height:38px" title="Cor identificadora">
     </div>
-    <button class="meta-btn" onclick="saveTeam()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
-    <div class="meta-status" id="teamStatus"></div>
+    <div id="teamMetaPreview" style="margin-top:8px;font-size:11px;color:var(--g1);text-align:right;font-family:'JetBrains Mono',monospace"></div>
+
+    <!-- Observações -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-note-sticky"></i> Observações</div>
+    <textarea class="meta-input" id="teamNotes" placeholder="Notas internas, especialidades, escala de trabalho…" rows="2" style="resize:vertical;font-family:'Inter',sans-serif"></textarea>
+
+    <button class="meta-btn" onclick="saveTeam()" style="margin-top:18px"><i class="fas fa-save"></i> Salvar Vendedor</button>
+    <div class="meta-status" id="teamStatus" style="margin-top:8px;font-size:11px;color:var(--red);text-align:center"></div>
     <button onclick="closeTeamModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
+<!-- TEAM IMPORT CSV MODAL -->
+<div id="teamImportOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeTeamImport()">
+  <div class="meta-modal" style="width:640px;max-height:92vh;overflow-y:auto">
+    <h2>📥 Importar Vendedores via CSV</h2>
+    <p>Faça upload de um CSV com sua equipe e contas de BM/Ads. Use o <b style="color:var(--green);cursor:pointer" onclick="downloadTeamTemplate()">modelo CSV</b> para garantir as colunas corretas.</p>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-list"></i> Colunas aceitas</div>
+    <div style="font-size:11px;color:var(--g1);background:var(--bg2);border:1px solid var(--b);border-radius:8px;padding:10px;line-height:1.6">
+      <b style="color:var(--w)">Obrigatório:</b> name, initials<br>
+      <b style="color:var(--w)">Opcional:</b> role, status, email, phone, region, hired_at, bm_name, ad_account, sales, conversions, revenue, goal, color, notes
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Arquivo</div>
+    <input type="file" id="teamCsvFile" accept=".csv,text/csv" class="meta-input" style="padding:8px;cursor:pointer">
+
+    <div id="teamImportPreview" style="margin-top:12px;font-size:11px;color:var(--g1);max-height:200px;overflow:auto"></div>
+
+    <label style="font-size:11px;color:var(--g1);display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:8px">
+      <input type="checkbox" id="teamImportReplace"> Substituir toda a equipe atual
+    </label>
+
+    <button class="meta-btn" id="teamImportBtn" onclick="runTeamImport()" style="margin-top:14px"><i class="fas fa-upload"></i> Importar Vendedores</button>
+    <div class="meta-status" id="teamImportStatus" style="margin-top:8px;font-size:11px;text-align:center"></div>
+    <button onclick="closeTeamImport()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
   </div>
 </div>
 
