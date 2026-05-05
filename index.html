@@ -2315,7 +2315,8 @@ const renders={
 
 /* ═══ UTILS ════════════════════════════════════════════════ */
 function fmtBRL(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0);}
-function fmtK(v){if(v>=1e6)return'R$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return'R$'+(v/1e3).toFixed(0)+'K';return'R$'+Math.round(v||0);}
+window.CUR_SYM=window.CUR_SYM||'R$';
+function fmtK(v){const s=window.CUR_SYM||'R$';if(v>=1e6)return s+(v/1e6).toFixed(1)+'M';if(v>=1e3)return s+(v/1e3).toFixed(0)+'K';return s+Math.round(v||0);}
 function fmtN(v){return new Intl.NumberFormat('pt-BR').format(Math.round(v||0));}
 
 function startClock(){
