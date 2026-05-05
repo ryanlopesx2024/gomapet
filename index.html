@@ -2345,10 +2345,16 @@ async function connectMeta(){
   const raw=inp.value.trim();
   if(!raw){setMetaStatus('Cole o ID da conta de anúncios','var(--red)');return;}
   const actId=raw.startsWith('act_')?raw:'act_'+raw.replace(/\D/g,'');
+  if(!/^act_\d{6,}$/.test(actId)){setMetaStatus('Formato inválido. Use act_XXXXXXXXXX','var(--red)');return;}
   inp.value=actId;
-  setMetaStatus('Conectando...','var(--pur)');
+  setMetaStatus('Validando conta na Meta...','var(--pur)');
   document.getElementById('metaConnectBtn').disabled=true;
   try{
+    const APIKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
+    const vRes=await fetch(`https://xfgfalglgfamavemedew.supabase.co/functions/v1/meta-ads?action=validate&apikey=${APIKEY}&account_id=${encodeURIComponent(actId)}`);
+    const v=await vRes.json();
+    if(!v.ok) throw new Error(v.error||'Conta inválida');
+    setMetaStatus(`✓ ${v.account.name} (${v.account.currency}) — carregando dados...`,'var(--green)');
     await fetchMetaData(actId);
     META.accountId=actId;
     localStorage.setItem('meta_account_id',actId);
