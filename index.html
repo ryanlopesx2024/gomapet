@@ -1141,9 +1141,13 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         </div>
       </div>
       <div class="sec" style="padding-top:0">
-        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
           <span>Tabela de Estoque Detalhada</span>
-          <button onclick="openStockModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Item</button>
+          <div style="display:flex;gap:6px">
+            <button onclick="downloadStockTemplate()" title="Baixar modelo CSV" style="background:transparent;border:1px solid var(--b);border-radius:8px;color:var(--g1);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-download"></i> Modelo CSV</button>
+            <button onclick="openStockImport()" style="background:rgba(91,156,246,.12);border:1px solid var(--blue);border-radius:8px;color:var(--blue);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Importar CSV</button>
+            <button onclick="openStockModal()" style="background:var(--ggl);border:1px solid var(--green);border-radius:8px;color:var(--green);padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Fredoka',sans-serif"><i class="fas fa-plus"></i> Novo Item</button>
+          </div>
         </div>
         <div class="card" style="padding:0;overflow:hidden">
           <table><thead><tr><th>Produto</th><th>SKU</th><th>Categoria</th><th>Estoque</th><th>Mín.</th><th>Venda/dia</th><th>Dias Rest.</th><th>Custo</th><th>Venda</th><th>Margem</th><th>Fornecedor</th><th>Local</th><th>Status</th><th>Ações</th></tr></thead>
@@ -1321,6 +1325,36 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
     <button class="meta-btn" onclick="saveStock()" style="margin-top:18px"><i class="fas fa-save"></i> Salvar Item</button>
     <div class="meta-status" id="stockStatus2" style="margin-top:8px;font-size:11px;color:var(--red);text-align:center"></div>
     <button onclick="closeStockModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
+  </div>
+</div>
+
+<!-- STOCK IMPORT CSV MODAL -->
+<div id="stockImportOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeStockImport()">
+  <div class="meta-modal" style="width:640px;max-height:92vh;overflow-y:auto">
+    <h2>📥 Importar Estoque via CSV</h2>
+    <p>Faça upload de um arquivo CSV para cadastrar vários itens de uma vez. Use o <b style="color:var(--green);cursor:pointer" onclick="downloadStockTemplate()">modelo CSV</b> para garantir as colunas corretas.</p>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-list"></i> Colunas aceitas</div>
+    <div style="font-size:11px;color:var(--g1);background:var(--bg2);border:1px solid var(--b);border-radius:8px;padding:10px;line-height:1.6">
+      <b style="color:var(--w)">Obrigatório:</b> name<br>
+      <b style="color:var(--w)">Opcional:</b> sku, category, supplier, units, days_left, min_stock, cost_price, sale_price, location, unit, status, notes
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-file-csv"></i> Arquivo</div>
+    <input type="file" id="stockCsvFile" accept=".csv,text/csv" class="meta-input" style="padding:8px;cursor:pointer">
+
+    <div id="stockImportPreview" style="margin-top:12px;font-size:11px;color:var(--g1);max-height:200px;overflow:auto"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <label style="font-size:11px;color:var(--g1);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="stockImportReplace"> Substituir todo o estoque atual
+      </label>
+      <div style="font-size:10px;color:var(--g1);text-align:right">Separador: vírgula <b>,</b> ou ponto-e-vírgula <b>;</b></div>
+    </div>
+
+    <button class="meta-btn" id="stockImportBtn" onclick="runStockImport()" style="margin-top:14px"><i class="fas fa-upload"></i> Importar Itens</button>
+    <div class="meta-status" id="stockImportStatus" style="margin-top:8px;font-size:11px;text-align:center"></div>
+    <button onclick="closeStockImport()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
   </div>
 </div>
 
@@ -3078,6 +3112,125 @@ async function saveStock(){
     else await sbReq('stock_items','POST',payload);
     await loadStock(); closeStockModal();
   }catch(e){document.getElementById('stockStatus2').textContent='Erro: '+e.message;}
+}
+
+/* ═══ IMPORTAÇÃO CSV DE ESTOQUE ════════════════════════════ */
+function downloadStockTemplate(){
+  const headers=['name','sku','category','supplier','units','days_left','min_stock','cost_price','sale_price','location','unit','status','notes'];
+  const sample=[
+    ['GomaPet 6 potes','GP-006','Suplemento','Distribuidora ABC','120','4','30','89.40','179.00','Prateleira A1','un','ok','Combo família'],
+    ['GomaPet 3 potes','GP-003','Suplemento','Distribuidora ABC','45','3','20','49.80','149.00','Prateleira A2','un','warn',''],
+    ['Petisco Natural 100g','PT-100','Petisco','PetFood Ltda','8','2','15','6.50','24.00','Prateleira B1','un','crit','Repor urgente']
+  ];
+  const csv=[headers.join(','),...sample.map(r=>r.map(c=>/[",;\n]/.test(c)?`"${String(c).replace(/"/g,'""')}"`:c).join(','))].join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='modelo-estoque-gomapet.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function openStockImport(){
+  document.getElementById('stockImportOverlay').style.display='flex';
+  document.getElementById('stockCsvFile').value='';
+  document.getElementById('stockImportPreview').innerHTML='';
+  document.getElementById('stockImportStatus').textContent='';
+  document.getElementById('stockImportReplace').checked=false;
+  const fi=document.getElementById('stockCsvFile');
+  if(!fi.dataset.bound){fi.addEventListener('change',_previewStockCsv);fi.dataset.bound='1';}
+}
+function closeStockImport(){document.getElementById('stockImportOverlay').style.display='none';}
+function _parseCSV(text){
+  const t=text.replace(/^\ufeff/,'');
+  const firstLine=t.split(/\r?\n/)[0]||'';
+  const sep=(firstLine.split(';').length>firstLine.split(',').length)?';':',';
+  const rows=[];let i=0,cur='',row=[],inQ=false;
+  while(i<t.length){
+    const ch=t[i];
+    if(inQ){
+      if(ch==='"'&&t[i+1]==='"'){cur+='"';i+=2;continue;}
+      if(ch==='"'){inQ=false;i++;continue;}
+      cur+=ch;i++;continue;
+    }
+    if(ch==='"'){inQ=true;i++;continue;}
+    if(ch===sep){row.push(cur);cur='';i++;continue;}
+    if(ch==='\n'||ch==='\r'){
+      if(cur!==''||row.length){row.push(cur);rows.push(row);row=[];cur='';}
+      if(ch==='\r'&&t[i+1]==='\n')i++;
+      i++;continue;
+    }
+    cur+=ch;i++;
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  if(!rows.length)return{headers:[],data:[]};
+  const headers=rows[0].map(h=>h.trim().toLowerCase());
+  const data=rows.slice(1).filter(r=>r.some(c=>c&&c.trim()!=='')).map(r=>{
+    const o={};headers.forEach((h,idx)=>{o[h]=(r[idx]||'').trim();});return o;
+  });
+  return{headers,data};
+}
+let _stockCsvParsed=null;
+async function _previewStockCsv(e){
+  const file=e.target.files[0];
+  const prev=document.getElementById('stockImportPreview');
+  if(!file){_stockCsvParsed=null;prev.innerHTML='';return;}
+  try{
+    const text=await file.text();
+    const {headers,data}=_parseCSV(text);
+    _stockCsvParsed={headers,data};
+    if(!headers.includes('name')){
+      prev.innerHTML=`<div style="color:var(--red)">⚠️ Coluna obrigatória <b>name</b> não encontrada. Detectadas: ${headers.join(', ')||'nenhuma'}</div>`;
+      return;
+    }
+    const sample=data.slice(0,5);
+    prev.innerHTML=`<div style="color:var(--green);margin-bottom:6px"><b>${data.length}</b> linha(s) detectada(s). Pré-visualização:</div>
+      <div style="border:1px solid var(--b);border-radius:8px;overflow:auto;max-height:160px">
+      <table style="width:100%;font-size:10px"><thead><tr>${headers.slice(0,6).map(h=>`<th style="padding:6px;text-align:left;color:var(--g1);background:var(--bg2)">${h}</th>`).join('')}</tr></thead>
+      <tbody>${sample.map(r=>`<tr>${headers.slice(0,6).map(h=>`<td style="padding:6px;border-top:1px solid var(--b)">${(r[h]||'').slice(0,30)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      ${data.length>5?`<div style="margin-top:4px;color:var(--g1)">… e mais ${data.length-5} linha(s)</div>`:''}`;
+  }catch(err){prev.innerHTML=`<div style="color:var(--red)">Erro ao ler arquivo: ${err.message}</div>`;}
+}
+async function runStockImport(){
+  const status=document.getElementById('stockImportStatus');
+  const btn=document.getElementById('stockImportBtn');
+  if(!_stockCsvParsed||!_stockCsvParsed.data.length){status.style.color='var(--red)';status.textContent='⚠️ Selecione um arquivo CSV válido primeiro.';return;}
+  if(!_stockCsvParsed.headers.includes('name')){status.style.color='var(--red)';status.textContent='⚠️ A coluna "name" é obrigatória.';return;}
+  const replace=document.getElementById('stockImportReplace').checked;
+  if(replace&&!confirm('Isso vai APAGAR todo o estoque atual antes de importar. Confirmar?'))return;
+  const num=v=>{const n=parseFloat(String(v||'').replace(',','.'));return isNaN(n)?0:n;};
+  const intv=v=>{const n=parseInt(String(v||'').replace(/[^\d-]/g,''));return isNaN(n)?0:n;};
+  const items=_stockCsvParsed.data.map(r=>{
+    const st=(r.status||'ok').toLowerCase();
+    return{
+      name:(r.name||'').trim(),
+      sku:r.sku||null,
+      category:r.category||null,
+      supplier:r.supplier||null,
+      units:intv(r.units),
+      days_left:intv(r.days_left||r['days left']||r.giro),
+      min_stock:intv(r.min_stock||r['min stock']||r.minimo),
+      cost_price:num(r.cost_price||r['cost price']||r.custo),
+      sale_price:num(r.sale_price||r['sale price']||r.venda||r.preco),
+      location:r.location||null,
+      unit:r.unit||'un',
+      status:['ok','warn','crit'].includes(st)?st:'ok',
+      notes:r.notes||null
+    };
+  }).filter(x=>x.name);
+  if(!items.length){status.style.color='var(--red)';status.textContent='⚠️ Nenhuma linha válida (campo name vazio).';return;}
+  btn.disabled=true;status.style.color='var(--g1)';status.textContent=`Importando ${items.length} itens…`;
+  try{
+    if(replace){await sbReq('stock_items?id=neq.00000000-0000-0000-0000-000000000000','DELETE');}
+    const batch=100;
+    for(let i=0;i<items.length;i+=batch){
+      await sbReq('stock_items','POST',items.slice(i,i+batch));
+    }
+    status.style.color='var(--green)';status.textContent=`✅ ${items.length} itens importados com sucesso!`;
+    await loadStock();
+    setTimeout(()=>closeStockImport(),1200);
+  }catch(e){
+    status.style.color='var(--red)';status.textContent='Erro: '+e.message;
+  }finally{btn.disabled=false;}
 }
 </script>
 <script type="module" src="/src/main.tsx"></script></body>
