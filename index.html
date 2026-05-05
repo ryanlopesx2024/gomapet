@@ -1262,7 +1262,7 @@ function navTo(pg){
   const doNav=()=>{
     document.querySelector('.content')&&(document.querySelector('.content').scrollTop=0);
     next.classList.add('active');
-    try{renders[pg]&&renders[pg]();}catch(e){console.error('render',pg,e);}
+    try{renders[pg]&&renders[pg]();}catch(e){console.error('Erro ao renderizar página',pg,e);}
   };
   if(cur&&cur!==next){
     cur.classList.add('out');
@@ -2584,7 +2584,7 @@ function applyMetaData(data){
   const curPg=document.querySelector('.page.active');
   if(curPg){
     const pg=curPg.id.replace('pg-','');
-    try{renders[pg]&&renders[pg]();}catch(e){console.error(e);}
+    try{renders[pg]&&renders[pg]();}catch(e){console.error('Erro ao renderizar página:',e);}
   }
 
   // ── UI updates ────────────────────────────────────────────────────
@@ -2634,10 +2634,10 @@ function toast(title,msg,type='ok'){
 
 /* ═══ BOOT ══════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',async()=>{
-  try{startClock();}catch(e){console.error(e);}
-  try{compute();}catch(e){console.error(e);}
-  try{renderVendas();}catch(e){console.error(e);}
-  try{renderAlertas();}catch(e){console.error(e);}
+  try{startClock();}catch(e){console.error('Erro ao iniciar relógio:',e);}
+  try{compute();}catch(e){console.error('Erro ao calcular dados:',e);}
+  try{renderVendas();}catch(e){console.error('Erro ao renderizar vendas:',e);}
+  try{renderAlertas();}catch(e){console.error('Erro ao renderizar alertas:',e);}
 
   if(META.accountId){
     const load=async()=>{
@@ -2648,7 +2648,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
         if(chip)chip.className='meta-chip ok';
         if(dot)dot.style.background='var(--green)';
       }catch(e){
-        console.warn('Meta fetch failed:',e.message);
+        console.warn('Falha ao buscar dados do Meta Ads:',e.message);
         const chip=document.getElementById('metaChip');
         const dot=document.getElementById('metaDot');
         if(chip)chip.className='meta-chip err';
@@ -2697,14 +2697,14 @@ async function loadTeam(){
     D.team=rows.map(r=>({id:r.id,n:r.name,i:r.initials,s:r.sales,c:r.sales?Math.round(r.conversions/r.sales*100):0,r:Number(r.revenue),col:r.color,_conv:r.conversions}));
     D.teamGoal=D.team.length?Math.max(20,Math.round(D.team.reduce((a,p)=>a+p.c,0)/D.team.length)):40;
     if(document.querySelector('.nav.on')?.dataset.pg==='time') renderTime();
-  }catch(e){console.warn('loadTeam',e);}
+  }catch(e){console.warn('Falha ao carregar equipe de vendas:',e);}
 }
 async function loadStock(){
   try{
     const rows=await sbReq('stock_items?select=*&order=units.asc');
     D.stock=rows.map(r=>({id:r.id,n:r.name,u:r.units,d:r.days_left||1,s:r.status}));
     if(document.querySelector('.nav.on')?.dataset.pg==='estoque') renderEstoque();
-  }catch(e){console.warn('loadStock',e);}
+  }catch(e){console.warn('Falha ao carregar estoque:',e);}
 }
 
 function openTeamModal(id){
