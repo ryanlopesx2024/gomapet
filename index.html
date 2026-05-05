@@ -1253,21 +1253,73 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
 
 <!-- STOCK MODAL -->
 <div id="stockOverlay" class="meta-overlay" style="display:none" onclick="if(event.target===this)closeStockModal()">
-  <div class="meta-modal">
+  <div class="meta-modal" style="width:640px;max-height:92vh;overflow-y:auto">
     <h2 id="stockModalTitle">📦 Novo Item de Estoque</h2>
+    <p>Cadastre todas as informações do produto para um controle financeiro e operacional preciso.</p>
     <input type="hidden" id="stockId">
-    <input class="meta-input" id="stockName" placeholder="Nome do produto">
+
+    <!-- Identificação -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:6px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-tag"></i> Identificação</div>
+    <input class="meta-input" id="stockName" placeholder="Nome do produto *">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <input class="meta-input" id="stockUnits" type="number" placeholder="Unidades" min="0">
-      <input class="meta-input" id="stockDays" type="number" placeholder="Venda/dia" min="0">
+      <input class="meta-input" id="stockSku" placeholder="SKU / Código">
+      <select class="meta-input" id="stockCategory">
+        <option value="">Categoria…</option>
+        <option value="Suplemento">Suplemento</option>
+        <option value="Ração">Ração</option>
+        <option value="Petisco">Petisco</option>
+        <option value="Higiene">Higiene</option>
+        <option value="Brinquedo">Brinquedo</option>
+        <option value="Acessório">Acessório</option>
+        <option value="Outro">Outro</option>
+      </select>
     </div>
-    <select class="meta-input" id="stockStatus" style="margin-top:8px">
-      <option value="ok">OK</option>
-      <option value="warn">Atenção</option>
-      <option value="crit">Crítico</option>
-    </select>
-    <button class="meta-btn" onclick="saveStock()" style="margin-top:14px"><i class="fas fa-save"></i> Salvar</button>
-    <div class="meta-status" id="stockStatus2"></div>
+
+    <!-- Quantidade -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-boxes-stacked"></i> Quantidade & Giro</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <input class="meta-input" id="stockUnits" type="number" placeholder="Unidades em estoque *" min="0">
+      <input class="meta-input" id="stockDays" type="number" placeholder="Venda/dia (giro)" min="0">
+      <input class="meta-input" id="stockMin" type="number" placeholder="Estoque mínimo" min="0">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <select class="meta-input" id="stockUnit">
+        <option value="un">Unidade (un)</option>
+        <option value="kg">Quilograma (kg)</option>
+        <option value="g">Grama (g)</option>
+        <option value="L">Litro (L)</option>
+        <option value="ml">Mililitro (ml)</option>
+        <option value="cx">Caixa (cx)</option>
+        <option value="pct">Pacote (pct)</option>
+      </select>
+      <select class="meta-input" id="stockStatus">
+        <option value="ok">✅ OK — Saudável</option>
+        <option value="warn">⚠️ Atenção</option>
+        <option value="crit">🔴 Crítico</option>
+      </select>
+    </div>
+
+    <!-- Financeiro -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-dollar-sign"></i> Financeiro</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="stockCost" type="number" placeholder="Preço de custo (R$)" min="0" step="0.01">
+      <input class="meta-input" id="stockPrice" type="number" placeholder="Preço de venda (R$)" min="0" step="0.01">
+    </div>
+    <div id="stockMarginPreview" style="margin-top:8px;font-size:11px;color:var(--g1);text-align:right;font-family:'JetBrains Mono',monospace"></div>
+
+    <!-- Logística -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-truck"></i> Logística</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input class="meta-input" id="stockSupplier" placeholder="Fornecedor">
+      <input class="meta-input" id="stockLocation" placeholder="Localização (ex: Prateleira A3)">
+    </div>
+
+    <!-- Observações -->
+    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-note-sticky"></i> Observações</div>
+    <textarea class="meta-input" id="stockNotes" placeholder="Notas internas, validade, lote, condições especiais…" rows="2" style="resize:vertical;font-family:'Inter',sans-serif"></textarea>
+
+    <button class="meta-btn" onclick="saveStock()" style="margin-top:18px"><i class="fas fa-save"></i> Salvar Item</button>
+    <div class="meta-status" id="stockStatus2" style="margin-top:8px;font-size:11px;color:var(--red);text-align:center"></div>
     <button onclick="closeStockModal()" style="margin-top:10px;background:transparent;border:none;color:var(--g1);font-size:11px;cursor:pointer;width:100%">Fechar</button>
   </div>
 </div>
