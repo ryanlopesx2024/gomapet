@@ -1314,6 +1314,10 @@ function compute(){
   const cpa=D.cpa||(spend/orders);
   S.comp={spend,orders,rev,roas,cpa,margin:D.margin,
     profit:rev*(D.margin/100), avgTkt:rev/orders};
+  // base snapshot sempre atualizado quando dados chegam
+  if(rev>0){window.__baseSnapshot={...S.comp};}
+  // re-aplica filtros se houver
+  if(window.__filters && typeof applyFiltersToKPIs==='function'){applyFiltersToKPIs();}
 }
 
 function updateKPIs(){
@@ -2799,36 +2803,41 @@ function removeFilter(k){
   const el=document.getElementById(map[k]); if(el)el.value=def;
   applyFilters(true);
 }
+function applyFiltersToKPIs(){
+  const f=window.__filters||getActiveFilters();
+  const base=window.__baseSnapshot;
+  if(!base||!base.rev)return;
+  const m=(PERIOD_MULT[f.period]||1)*(CHANNEL_MULT[f.channel]||1)*(CAT_MULT[f.category]||1)*(STATUS_MULT[f.status]||1)*(f.seller&&f.seller!=='all'?0.18:1);
+  const spendFactor=(f.channel==='organic'||f.channel==='recompra')?0.05:1;
+  const rev=base.rev*m;
+  const orders=Math.max(0,Math.round(base.orders*m));
+  const spend=base.spend*m*spendFactor;
+  S.comp={
+    spend, orders, rev,
+    margin:base.margin,
+    profit:rev*(base.margin/100),
+    avgTkt:orders>0?rev/orders:base.avgTkt,
+    roas:spend>0?rev/spend:0,
+    cpa:orders>0?spend/orders:0
+  };
+  if(typeof updateKPIs==='function')updateKPIs();
+}
 function applyFilters(close){
   const f=getActiveFilters(); window.__filters=f;
   if(close)document.getElementById('fltPop')?.classList.remove('open');
-  // snapshot dos valores base na primeira aplicação
-  if(!window.__baseSnapshot&&window.S&&S.comp&&S.comp.rev){
-    window.__baseSnapshot={...S.comp};
-  }
-  const base=window.__baseSnapshot||S.comp||{};
-  if(base.rev){
-    const m=(PERIOD_MULT[f.period]||1)*(CHANNEL_MULT[f.channel]||1)*(CAT_MULT[f.category]||1)*(STATUS_MULT[f.status]||1)*(f.seller!=='all'?0.18:1);
-    S.comp={...base,
-      rev:base.rev*m, orders:Math.round(base.orders*m),
-      spend:base.spend*m*(f.channel==='organic'||f.channel==='recompra'?0.05:1),
-      profit:base.rev*m*(base.margin/100),
-      avgTkt:base.avgTkt
-    };
-    S.comp.roas=S.comp.spend>0?S.comp.rev/S.comp.spend:0;
-    S.comp.cpa=S.comp.orders>0?S.comp.spend/S.comp.orders:0;
-    if(typeof updateKPIs==='function')updateKPIs();
-  }
+  if(!window.__baseSnapshot&&window.S&&S.comp&&S.comp.rev){window.__baseSnapshot={...S.comp};}
+  applyFiltersToKPIs();
   renderFilterChips();
-  console.log('[filtros]',f);
+  console.log('[filtros aplicados]',f,'→ rev:',S.comp?.rev);
 }
 function clearFilters(){
   ['fChannel','fCat','fSeller','fStatus'].forEach(id=>{const el=document.getElementById(id); if(el)el.value='all';});
   const d=document.getElementById('dFilter'); if(d)d.value='last_30_days';
   applyFilters(true);
 }
-['dFilter','fChannel','fCat','fSeller','fStatus'].forEach(id=>{
-  document.addEventListener('change',e=>{if(e.target&&e.target.id===id)applyFilters(false);});
+// listeners diretos (change dispara em qualquer mudança de select)
+document.addEventListener('change',e=>{
+  if(e.target&&['dFilter','fChannel','fCat','fSeller','fStatus'].includes(e.target.id))applyFilters(false);
 });
 
 /* ═══ TIME + ESTOQUE — CRUD via Supabase REST ═══════════════ */
