@@ -3201,10 +3201,22 @@ function _teamMetaPreview(){
   if(rev>0&&conv>0)parts.push(`Tkt: <b>R$ ${(rev/conv).toFixed(2)}</b>`);
   el.innerHTML=parts.join(' · ');
 }
+function _fillTeamBmOptions(){
+  try{
+    const bms=new Set(), accts=new Map();
+    (D.team||[]).forEach(t=>{ if(t.bm)bms.add(t.bm); if(t.adAccount)accts.set(t.adAccount,t.bm||''); });
+    if(window.META&&META.accountId){accts.set(META.accountId, accts.get(META.accountId)||'Conta Meta conectada');}
+    const dl1=document.getElementById('teamBmList');
+    const dl2=document.getElementById('teamAdAccountList');
+    if(dl1)dl1.innerHTML=[...bms].map(b=>`<option value="${b.replace(/"/g,'&quot;')}"></option>`).join('');
+    if(dl2)dl2.innerHTML=[...accts.entries()].map(([id,bm])=>`<option value="${id.replace(/"/g,'&quot;')}"${bm?` label="${bm.replace(/"/g,'&quot;')}"`:''}></option>`).join('');
+  }catch(e){}
+}
 function openTeamModal(id){
   document.getElementById('teamOverlay').style.display='flex';
   document.getElementById('teamModalTitle').textContent=id?'✏️ Editar Vendedor':'👤 Novo Vendedor';
   ['teamId','teamName','teamInitials','teamSales','teamConv','teamRevenue','teamGoal','teamEmail','teamPhone','teamRegion','teamHired','teamBm','teamAdAccount','teamNotes'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
+  _fillTeamBmOptions();
   document.getElementById('teamColor').value='#29B347';
   document.getElementById('teamRole').value='';
   document.getElementById('teamStatusF').value='active';
