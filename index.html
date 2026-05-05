@@ -474,6 +474,10 @@ td{padding:10px 14px;font-size:12.5px;}
           <option value="last_7_days">Últimos 7 dias</option>
         </select>
       </div>
+      <button id="logoutBtn" onclick="doLogout()" title="Sair" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;transition:background .15s">
+        <i class="fas fa-right-from-bracket" style="font-size:11px"></i>
+        <span>Sair</span>
+      </button>
     </div>
   </div>
 
@@ -2642,6 +2646,20 @@ window.addEventListener('DOMContentLoaded',async()=>{
 const SB_URL='https://xfgfalglgfamavemedew.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
 const sbHeaders=()=>({'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'});
+
+async function doLogout(){
+  try{
+    const tokenKey=Object.keys(localStorage).find(k=>k.startsWith('sb-')&&k.endsWith('-auth-token'));
+    let accessToken=SB_KEY;
+    if(tokenKey){
+      try{const tok=JSON.parse(localStorage.getItem(tokenKey));if(tok&&tok.access_token)accessToken=tok.access_token;}catch(e){}
+    }
+    await fetch(`${SB_URL}/auth/v1/logout`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+accessToken}}).catch(()=>{});
+    Object.keys(localStorage).filter(k=>k.startsWith('sb-')).forEach(k=>localStorage.removeItem(k));
+  }finally{
+    window.location.href='/auth';
+  }
+}
 
 async function sbReq(path,method='GET',body){
   const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method,headers:sbHeaders(),body:body?JSON.stringify(body):undefined});
