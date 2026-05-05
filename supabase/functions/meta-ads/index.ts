@@ -108,7 +108,7 @@ async function buildPayload(accountId: string) {
   ];
 
   const campsRaw = (await metaGet(`${act}/insights`, {
-    date_preset: "last_30d", level: "campaign",
+    time_range: TIME_RANGE, level: "campaign",
     fields: "campaign_name,campaign_id,spend,impressions,clicks,ctr,cpc,actions,action_values,purchase_roas",
     limit: 30,
   })).data;
