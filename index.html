@@ -157,19 +157,28 @@ body,body :where(div,span,p,a,label,small,strong,em,b,i,h1,h2,h3,h4,h5,h6,td,th,
 }
 .hdr-live{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--g1);}
 .hdr-r{display:flex;align-items:center;gap:8px;}
-.filters{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:4px;}
-.sel{
-  display:flex;align-items:center;gap:6px;background:linear-gradient(180deg,rgba(41,179,71,.08),rgba(41,179,71,.02));
-  border:1px solid rgba(41,179,71,.18);border-radius:9px;padding:6px 11px;
-  transition:all .18s; position:relative;
-}
-.sel:hover{border-color:rgba(41,179,71,.5);background:linear-gradient(180deg,rgba(41,179,71,.14),rgba(41,179,71,.04));box-shadow:0 0 0 3px rgba(41,179,71,.06);}
-.sel.active{border-color:var(--green);box-shadow:0 0 0 2px rgba(41,179,71,.18);}
-.sel select{background:transparent;border:none;color:var(--w);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;outline:none;padding-right:14px;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2329B347' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right center;}
-.sel select option{background:#0d1410;color:#fff;padding:6px;}
-.sel i{color:var(--green);font-size:11px;}
-.sel-clear{background:transparent;border:none;color:var(--g1);cursor:pointer;font-size:11px;padding:6px 10px;border-radius:8px;transition:all .15s;font-family:inherit;display:flex;align-items:center;gap:4px;}
-.sel-clear:hover{color:var(--w);background:rgba(255,255,255,.06);}
+/* ── FILTROS ─ botão + popover ─────────────────────────── */
+.flt-wrap{position:relative;display:flex;align-items:center;gap:6px;}
+.flt-btn{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(180deg,rgba(41,179,71,.12),rgba(41,179,71,.04));border:1px solid rgba(41,179,71,.28);color:#fff;font:600 12px 'Inter',sans-serif;padding:7px 12px;border-radius:9px;cursor:pointer;transition:all .15s;}
+.flt-btn:hover{border-color:var(--green);box-shadow:0 0 0 3px rgba(41,179,71,.08);}
+.flt-btn .badge{background:var(--green);color:#06140a;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:800;min-width:16px;text-align:center;}
+.flt-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(41,179,71,.1);border:1px solid rgba(41,179,71,.28);color:#cfeed8;font:600 11px 'Inter',sans-serif;padding:4px 8px;border-radius:99px;}
+.flt-chip button{background:transparent;border:none;color:#cfeed8;cursor:pointer;font-size:12px;line-height:1;padding:0;opacity:.7;}
+.flt-chip button:hover{opacity:1;color:#fff;}
+.flt-pop{position:absolute;top:calc(100% + 8px);right:0;background:#0d1410;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 16px 48px rgba(0,0,0,.6);padding:14px;width:340px;z-index:200;display:none;}
+.flt-pop.open{display:block;animation:fltIn .14s ease-out;}
+@keyframes fltIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.flt-pop h4{margin:0 0 10px;color:#fff;font:700 13px 'Inter',sans-serif;display:flex;align-items:center;gap:8px;}
+.flt-row{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.flt-row label{font:600 10px 'Inter',sans-serif;color:#7a8a7e;text-transform:uppercase;letter-spacing:.5px;}
+.flt-row select{background:#161e19;border:1px solid rgba(255,255,255,.08);color:#fff;font:500 12px 'Inter',sans-serif;padding:8px 10px;border-radius:8px;outline:none;cursor:pointer;}
+.flt-row select:focus{border-color:var(--green);}
+.flt-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;}
+.flt-actions button{font:600 12px 'Inter',sans-serif;padding:7px 14px;border-radius:8px;cursor:pointer;border:none;}
+.flt-clear{background:transparent;color:#9aa;}
+.flt-clear:hover{color:#fff;}
+.flt-apply{background:var(--green);color:#06140a;}
+.flt-apply:hover{filter:brightness(1.1);}
 
 /* ── CONTENT ─────────────────────────────────────────────── */
 .content{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);scroll-behavior:smooth;}
