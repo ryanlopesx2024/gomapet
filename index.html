@@ -2584,7 +2584,7 @@ function applyMetaData(data){
   const curPg=document.querySelector('.page.active');
   if(curPg){
     const pg=curPg.id.replace('pg-','');
-    try{renders[pg]&&renders[pg]();}catch(e){console.error(e);}
+    try{renders[pg]&&renders[pg]();}catch(e){console.error('Erro ao renderizar página:',e);}
   }
 
   // ── UI updates ────────────────────────────────────────────────────
