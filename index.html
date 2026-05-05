@@ -13,7 +13,7 @@
 :root{
   --bg:#090e0a;--bg2:#0d1410;--card:#111a13;--cardH:#162019;
   --b:#1e2d22;--bH:#2a3f30;
-  --w:#e8f0e9;--g1:#5a7a60;--g2:#243828;--g3:#0f1810;
+  --w:#ffffff;--g1:#cfe0d2;--g2:#e8f0e9;--g3:#0f1810;
   /* GomaPet brand exact */
   --green:#29B347;--gD:#1D8A35;--ggl:rgba(41,179,71,.14);--gL:rgba(41,179,71,.06);
   --cream:#EDD99A;--cgl:rgba(237,217,154,.12);
@@ -433,7 +433,7 @@ td{padding:10px 14px;font-size:12.5px;}
   <div class="sb-foot">
     <div class="api-chip">
       <div class="dot"></div>
-      <div class="api-txt">🐕 GomaPet · Demo</div>
+      <div class="api-txt">🐕 GomaPet · Live</div>
     </div>
   </div>
 </aside>
@@ -1141,20 +1141,9 @@ const D={
     ]
   },
   camps:[],
-  team:[
-    {n:'Carol Ferreira',i:'CF',s:247,c:49,r:75750,col:'#29B347'},
-    {n:'Maria Costa',   i:'MC',s:228,c:45,r:61400,col:'#5b9cf6'},
-    {n:'Ana Lima',      i:'AL',s:219,c:41,r:58200,col:'#F0C040'},
-    {n:'Pedro Souza',   i:'PS',s:182,c:36,r:49800,col:'#e8a030'},
-    {n:'João Silva',    i:'JS',s:195,c:32,r:42360,col:'#e84455'}
-  ],
-  teamGoal:40,
-  stock:[
-    {n:'GomaPet 6 potes',u:87,  d:17,s:'crit'},
-    {n:'GomaPet 3 potes',u:198, d:25,s:'warn'},
-    {n:'GomaPet 1 pote', u:423, d:30,s:'ok'},
-    {n:'Bafisco',        u:534, d:30,s:'ok'}
-  ],
+  team:[],
+  teamGoal:0,
+  stock:[],
   daily:[]
 };
 
@@ -1216,9 +1205,9 @@ function SCALES(o={}){
   const{yCb=null,xCb=null,yMin,yMax,hide=false}=o;
   return{
     x:{display:!hide,grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-      ticks:{color:'#40405a',font:{family:'Inter',size:10},maxTicksLimit:10,callback:xCb||undefined}},
+      ticks:{color:'#cfe0d2',font:{family:'Inter',size:10},maxTicksLimit:10,callback:xCb||undefined}},
     y:{display:!hide,grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},min:yMin,max:yMax,
-      ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:yCb||(v=>(window.CUR_SYM||'R$')+fmtN(v))}}
+      ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:yCb||(v=>(window.CUR_SYM||'R$')+fmtN(v))}}
   };
 }
 function animBars(){
@@ -1678,11 +1667,11 @@ function renderTrafego(){
         tooltip:TT({callbacks:{label:x=>`${x.dataset.label}: inv ${window.CUR_SYM||'R$'}${(x.parsed.x).toFixed(0)}K · rev ${window.CUR_SYM||'R$'}${(x.parsed.y).toFixed(0)}K`}})},
       scales:{
         x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#40405a',font:{size:10}}},
+          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
+          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}},
         y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#40405a',font:{size:10}}}
+          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
+          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}}
       }}});
   }
 
@@ -1725,7 +1714,7 @@ function renderTrafego(){
       plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
         tooltip:TT()},
       scales:{
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'Inter',size:10}}},
+        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'Inter',size:10}}},
         yCtr:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},position:'left',
           ticks:{color:'#5b9cf6',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}},
         yCpa:{grid:{display:false},border:{color:'transparent'},position:'right',
@@ -1798,7 +1787,7 @@ function renderFunil(){
           tooltip:TT({callbacks:{label:x=>` Perda: ${x.raw}%`}})},
         scales:{
           y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#6060a0',font:{family:'Inter',size:10}}},
-          x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}}
+          x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}}
         }}});
     }
   }
@@ -1959,7 +1948,7 @@ function renderRecompra(){
       plugins:{legend:{display:false},tooltip:TT({callbacks:{label:x=>` LTV est.: ${fmtBRL(x.raw)}`}})},
       scales:{
         y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#6060a0',font:{family:'Inter',size:11}}},
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>fmtBRL(v)}}
+        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>fmtBRL(v)}}
       }}});
   }
 }
@@ -2177,8 +2166,8 @@ function renderEstoque(){
     plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:11},usePointStyle:true,padding:12}},
       tooltip:TT({callbacks:{label:x=>` ${x.dataset.label}: ${fmtN(x.raw)} un.`}})},
     scales:{
-      x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'Inter',size:10},maxTicksLimit:10}},
-      y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>fmtN(v)+' un.'}}
+      x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'Inter',size:10},maxTicksLimit:10}},
+      y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>fmtN(v)+' un.'}}
     }}});
 }
 
@@ -2573,15 +2562,27 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{renderAlertas();}catch(e){console.error(e);}
 
   if(META.accountId){
-    try{
-      await fetchMetaData(META.accountId);
-    }catch(e){
-      console.warn('Meta fetch failed:',e.message);
-      const chip=document.getElementById('metaChip');
-      const dot=document.getElementById('metaDot');
-      if(chip)chip.className='meta-chip err';
-      if(dot)dot.style.background='var(--red)';
-    }
+    const load=async()=>{
+      try{
+        await fetchMetaData(META.accountId);
+        const chip=document.getElementById('metaChip');
+        const dot=document.getElementById('metaDot');
+        if(chip)chip.className='meta-chip ok';
+        if(dot)dot.style.background='var(--green)';
+      }catch(e){
+        console.warn('Meta fetch failed:',e.message);
+        const chip=document.getElementById('metaChip');
+        const dot=document.getElementById('metaDot');
+        if(chip)chip.className='meta-chip err';
+        if(dot)dot.style.background='var(--red)';
+      }
+    };
+    await load();
+    // Auto-refresh a cada 60s — força bypass de cache
+    setInterval(()=>{
+      const u=`https://xfgfalglgfamavemedew.supabase.co/functions/v1/meta-ads?force=1&apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM&account_id=${encodeURIComponent(META.accountId)}`;
+      fetch(u).then(r=>r.json()).then(d=>{if(d.ok){META.lastData=d;applyMetaData(d);}}).catch(()=>{});
+    },60000);
   }
 });
 </script>
