@@ -406,6 +406,11 @@ td{padding:10px 14px;font-size:12.5px;}
 html.auth-route,html.auth-route body{height:auto!important;overflow:auto!important;display:block!important;}
 html.auth-route #root{display:block!important;width:100%!important;min-height:100vh;}
 html.auth-route .sb,html.auth-route .main{display:none!important;}
+#bootLoader{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(1200px 600px at 10% -10%, rgba(41,179,71,.25), transparent 60%), radial-gradient(900px 500px at 110% 110%, rgba(237,217,154,.15), transparent 60%), linear-gradient(135deg, #0e2e18 0%, #0a1f10 100%);font-family:'Inter',sans-serif;}
+#bootLoader .bl-spin{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:#29B347;animation:blspin .8s linear infinite;}
+#bootLoader .bl-txt{color:rgba(255,255,255,.75);font-size:13px;letter-spacing:.4px;font-weight:500;}
+#bootLoader.hide{opacity:0;pointer-events:none;transition:opacity .25s ease;}
+@keyframes blspin{to{transform:rotate(360deg);}}
 </style>
 <script>
 /* Auth guard — redireciona para /auth se não houver sessão válida */
@@ -427,9 +432,11 @@ html.auth-route .sb,html.auth-route .main{display:none!important;}
     }
   }catch(e){ window.location.replace('/auth'); }
 })();
+window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if(el){el.classList.add('hide');setTimeout(function(){el.remove();},300);}};
 </script>
 </head>
-<body><div id="root" style="display:none"></div>
+<body><div id="bootLoader"><div class="bl-spin"></div><div class="bl-txt">Carregando…</div></div><div id="root" style="display:none"></div>
+
 
 <!-- SIDEBAR -->
 <aside class="sb">
