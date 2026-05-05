@@ -519,52 +519,62 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         <span id="metaChipTxt">Meta Ads</span>
         <i class="fas fa-plug" style="font-size:10px;color:var(--g1)"></i>
       </div>
-      <div class="filters">
-        <div class="sel" title="Período"><i class="fas fa-calendar-days"></i>
-          <select id="dFilter" onchange="applyFilters()">
-            <option value="today">Hoje</option>
-            <option value="yesterday">Ontem</option>
-            <option value="last_7_days">Últimos 7 dias</option>
-            <option value="last_30_days" selected>Últimos 30 dias</option>
-            <option value="last_90_days">Últimos 90 dias</option>
-            <option value="this_month">Este mês</option>
-            <option value="last_month">Mês passado</option>
-            <option value="this_year">Este ano</option>
-          </select>
+      <div id="fltChips" class="flt-wrap" style="gap:5px"></div>
+      <div class="flt-wrap">
+        <button class="flt-btn" onclick="toggleFilters(event)" id="fltBtn">
+          <i class="fas fa-sliders"></i>
+          <span>Filtros</span>
+          <span class="badge" id="fltCount" style="display:none">0</span>
+        </button>
+        <div class="flt-pop" id="fltPop" onclick="event.stopPropagation()">
+          <h4><i class="fas fa-sliders" style="color:var(--green)"></i> Filtrar dados</h4>
+          <div class="flt-row"><label>Período</label>
+            <select id="dFilter">
+              <option value="today">Hoje</option>
+              <option value="yesterday">Ontem</option>
+              <option value="last_7_days">Últimos 7 dias</option>
+              <option value="last_30_days" selected>Últimos 30 dias</option>
+              <option value="last_90_days">Últimos 90 dias</option>
+              <option value="this_month">Este mês</option>
+              <option value="last_month">Mês passado</option>
+              <option value="this_year">Este ano</option>
+            </select>
+          </div>
+          <div class="flt-row"><label>Canal</label>
+            <select id="fChannel">
+              <option value="all">Todos canais</option>
+              <option value="meta">Meta Ads</option>
+              <option value="google">Google Ads</option>
+              <option value="organic">Orgânico</option>
+              <option value="recompra">Recompra</option>
+            </select>
+          </div>
+          <div class="flt-row"><label>Categoria</label>
+            <select id="fCat">
+              <option value="all">Todas categorias</option>
+              <option value="racao">Ração</option>
+              <option value="petisco">Petiscos</option>
+              <option value="brinquedo">Brinquedos</option>
+              <option value="higiene">Higiene</option>
+              <option value="acessorio">Acessórios</option>
+            </select>
+          </div>
+          <div class="flt-row"><label>Vendedor</label>
+            <select id="fSeller"><option value="all">Todos vendedores</option></select>
+          </div>
+          <div class="flt-row"><label>Status</label>
+            <select id="fStatus">
+              <option value="all">Todos status</option>
+              <option value="paid">Pago</option>
+              <option value="pending">Pendente</option>
+              <option value="canceled">Cancelado</option>
+            </select>
+          </div>
+          <div class="flt-actions">
+            <button class="flt-clear" onclick="clearFilters()">Limpar</button>
+            <button class="flt-apply" onclick="applyFilters(true)">Aplicar</button>
+          </div>
         </div>
-        <div class="sel" title="Canal"><i class="fas fa-bullhorn"></i>
-          <select id="fChannel" onchange="applyFilters()">
-            <option value="all">Todos canais</option>
-            <option value="meta">Meta Ads</option>
-            <option value="google">Google Ads</option>
-            <option value="organic">Orgânico</option>
-            <option value="recompra">Recompra</option>
-          </select>
-        </div>
-        <div class="sel" title="Categoria"><i class="fas fa-tags"></i>
-          <select id="fCat" onchange="applyFilters()">
-            <option value="all">Todas categorias</option>
-            <option value="racao">Ração</option>
-            <option value="petisco">Petiscos</option>
-            <option value="brinquedo">Brinquedos</option>
-            <option value="higiene">Higiene</option>
-            <option value="acessorio">Acessórios</option>
-          </select>
-        </div>
-        <div class="sel" title="Vendedor"><i class="fas fa-user"></i>
-          <select id="fSeller" onchange="applyFilters()">
-            <option value="all">Todos vendedores</option>
-          </select>
-        </div>
-        <div class="sel" title="Status"><i class="fas fa-circle-check"></i>
-          <select id="fStatus" onchange="applyFilters()">
-            <option value="all">Todos status</option>
-            <option value="paid">Pago</option>
-            <option value="pending">Pendente</option>
-            <option value="canceled">Cancelado</option>
-          </select>
-        </div>
-        <button class="sel-clear" onclick="clearFilters()" title="Limpar filtros"><i class="fas fa-rotate-left"></i> Limpar</button>
       </div>
       <button id="logoutBtn" onclick="doLogout()" title="Sair" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;transition:background .15s">
         <i class="fas fa-right-from-bracket" style="font-size:11px"></i>
