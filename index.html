@@ -2822,6 +2822,9 @@ function applyFiltersToKPIs(){
     cpa:orders>0?spend/orders:0
   };
   if(typeof updateKPIs==='function')updateKPIs();
+  Object.keys(CH).forEach(k=>{try{if(CH[k]&&CH[k].destroy)CH[k].destroy();}catch(e){} delete CH[k];});
+  const curPg=document.querySelector('.page.active');
+  if(curPg){const pg=curPg.id.replace('pg-','');try{renders[pg]&&renders[pg]();}catch(e){console.error('Erro ao renderizar página filtrada:',e);}}
 }
 function applyFilters(close){
   const f=getActiveFilters(); window.__filters=f;
