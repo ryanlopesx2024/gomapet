@@ -404,6 +404,25 @@ td{padding:10px 14px;font-size:12.5px;}
 @media(max-width:900px){.g3{grid-template-columns:1fr 1fr;}}
 @media(max-width:768px){.sb{display:none;}.main{width:100%;}.g4,.g3,.g2,.g5{grid-template-columns:1fr;}}
 </style>
+<script>
+/* Auth guard — redireciona para /auth se não houver sessão válida */
+(function(){
+  try{
+    var key = Object.keys(localStorage).find(function(k){return k.indexOf('sb-')===0 && k.indexOf('-auth-token')>0;});
+    var ok = false;
+    if(key){
+      try{
+        var tok = JSON.parse(localStorage.getItem(key));
+        if(tok && tok.access_token && tok.expires_at && (tok.expires_at*1000) > Date.now()){ ok = true; }
+      }catch(e){}
+    }
+    if(!ok){
+      Object.keys(localStorage).filter(function(k){return k.indexOf('sb-')===0;}).forEach(function(k){localStorage.removeItem(k);});
+      window.location.replace('/auth');
+    }
+  }catch(e){ window.location.replace('/auth'); }
+})();
+</script>
 </head>
 <body><div id="root" style="display:none"></div>
 
