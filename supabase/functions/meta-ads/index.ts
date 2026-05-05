@@ -68,9 +68,13 @@ function segAgg(list: any[]) {
 
 async function buildPayload(accountId: string) {
   const act = accountId.startsWith("act_") ? accountId : `act_${accountId}`;
+  const _today = new Date();
+  const _since30 = new Date(_today.getTime() - 29*86400000);
+  const _fmt = (d: Date) => d.toISOString().slice(0,10);
+  const TIME_RANGE = JSON.stringify({ since: _fmt(_since30), until: _fmt(_today) });
   const acct = await metaGet(act, { fields: "id,name,currency,timezone_name" });
   const acctIns = (await metaGet(`${act}/insights`, {
-    date_preset: "last_30d", level: "account",
+    time_range: TIME_RANGE, level: "account",
     fields: "spend,impressions,clicks,ctr,cpc,actions,action_values,purchase_roas",
   })).data[0];
 
