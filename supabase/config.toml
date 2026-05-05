@@ -1,1 +1,4 @@
 project_id = "xfgfalglgfamavemedew"
+
+[functions.meta-ads]
+verify_jwt = false
