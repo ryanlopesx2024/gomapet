@@ -1218,7 +1218,7 @@ function SCALES(o={}){
     x:{display:!hide,grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
       ticks:{color:'#40405a',font:{family:'Inter',size:10},maxTicksLimit:10,callback:xCb||undefined}},
     y:{display:!hide,grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},min:yMin,max:yMax,
-      ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:yCb||(v=>'R$'+fmtN(v))}}
+      ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:yCb||(v=>(window.CUR_SYM||'R$')+fmtN(v))}}
   };
 }
 function animBars(){
@@ -1389,7 +1389,7 @@ function renderVendas(){
         const intense=pct>80?'.9':pct>60?'.65':pct>40?'.45':pct>20?'.3':'.15';
         return`<div style="flex:1;text-align:center">
           <div style="height:50px;border-radius:6px 6px 0 0;background:rgba(41,179,71,${intense});display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px">
-            <span class="mono" style="font-size:9px;color:#fff;font-weight:700">${fmtK(dowAvg[i]).replace('R$','')}</span>
+            <span class="mono" style="font-size:9px;color:#fff;font-weight:700">${fmtK(dowAvg[i]).replace(window.CUR_SYM||'R$','')}</span>
           </div>
           <div style="font-size:10px;color:var(--g1);padding:4px 0;font-weight:600">${d}</div>
         </div>`;}).join('')}
@@ -1626,7 +1626,7 @@ function renderTrafego(){
       </div>
       <div class="camp-metric"><span class="camp-m-lbl">Invest.</span><span class="camp-m-val">${fmtBRL(camp.inv)}</span></div>
       <div class="camp-metric"><span class="camp-m-lbl">Receita</span><span class="camp-m-val" style="color:${col}">${fmtBRL(camp.rev)}</span></div>
-      <div class="camp-metric"><span class="camp-m-lbl">CPA</span><span class="camp-m-val">R$${camp.cpa}</span></div>
+      <div class="camp-metric"><span class="camp-m-lbl">CPA</span><span class="camp-m-val">${window.CUR_SYM||'R$'}${camp.cpa}</span></div>
       <div class="camp-metric"><span class="camp-m-lbl">CTR</span><span class="camp-m-val">${camp.ctr}%</span></div>
     </div>`;}).join('');
 
@@ -1675,14 +1675,14 @@ function renderTrafego(){
       }))
     },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
       plugins:{legend:{display:false},
-        tooltip:TT({callbacks:{label:x=>`${x.dataset.label}: inv R$${(x.parsed.x).toFixed(0)}K · rev R$${(x.parsed.y).toFixed(0)}K`}})},
+        tooltip:TT({callbacks:{label:x=>`${x.dataset.label}: inv ${window.CUR_SYM||'R$'}${(x.parsed.x).toFixed(0)}K · rev ${window.CUR_SYM||'R$'}${(x.parsed.y).toFixed(0)}K`}})},
       scales:{
         x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
           ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Investimento (R$ mil)',color:'#40405a',font:{size:10}}},
+          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#40405a',font:{size:10}}},
         y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
           ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Receita (R$ mil)',color:'#40405a',font:{size:10}}}
+          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#40405a',font:{size:10}}}
       }}});
   }
 
@@ -1719,7 +1719,7 @@ function renderTrafego(){
       labels:D.camps.map(c=>c.n),
       datasets:[
         {label:'CTR (%)',data:D.camps.map(c=>c.ctr),backgroundColor:'rgba(91,156,246,.7)',borderColor:'#5b9cf6',borderWidth:1,borderRadius:5,yAxisID:'yCtr'},
-        {label:'CPA (R$)',data:D.camps.map(c=>c.cpa),backgroundColor:'rgba(232,68,85,.7)',borderColor:'#e84455',borderWidth:1,borderRadius:5,yAxisID:'yCpa'}
+        {label:'CPA ('+(window.CUR_SYM||'R$')+')',data:D.camps.map(c=>c.cpa),backgroundColor:'rgba(232,68,85,.7)',borderColor:'#e84455',borderWidth:1,borderRadius:5,yAxisID:'yCpa'}
       ]
     },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
       plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
@@ -1729,7 +1729,7 @@ function renderTrafego(){
         yCtr:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},position:'left',
           ticks:{color:'#5b9cf6',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}},
         yCpa:{grid:{display:false},border:{color:'transparent'},position:'right',
-          ticks:{color:'#e84455',font:{family:'JetBrains Mono',size:10},callback:v=>'R$'+v}}
+          ticks:{color:'#e84455',font:{family:'JetBrains Mono',size:10},callback:v=>(window.CUR_SYM||'R$')+v}}
       }}});
   }
 }
@@ -2032,7 +2032,7 @@ function renderTime(){
         <div class="camp-metric"><span class="camp-m-lbl">Vendas</span><span class="camp-m-val" style="color:${p.col}">${sells}</span></div>
         <div class="camp-metric"><span class="camp-m-lbl">Conv.</span><span class="camp-m-val" style="color:${conv>=goal?'var(--green)':'var(--red)'}">${conv}%</span></div>
         <div class="camp-metric"><span class="camp-m-lbl">Fat.</span><span class="camp-m-val">${fmtK(p.r)}</span></div>
-        <div class="camp-metric"><span class="camp-m-lbl">Tick. Méd.</span><span class="camp-m-val">R$${perSell}</span></div>
+        <div class="camp-metric"><span class="camp-m-lbl">Tick. Méd.</span><span class="camp-m-val">${window.CUR_SYM||'R$'}${perSell}</span></div>
         <div style="margin-top:8px"><span class="badge ${diff>=0?'b-g':'b-r'}" style="width:100%;justify-content:center">${diff>=0?'+'+diff+'% acima':''+diff+'% abaixo'}</span></div>
       </div>`;
     }).join('')+`</div>`;
@@ -2315,7 +2315,8 @@ const renders={
 
 /* ═══ UTILS ════════════════════════════════════════════════ */
 function fmtBRL(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0,maximumFractionDigits:0}).format(v||0);}
-function fmtK(v){if(v>=1e6)return'R$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return'R$'+(v/1e3).toFixed(0)+'K';return'R$'+Math.round(v||0);}
+window.CUR_SYM=window.CUR_SYM||'R$';
+function fmtK(v){const s=window.CUR_SYM||'R$';if(v>=1e6)return s+(v/1e6).toFixed(1)+'M';if(v>=1e3)return s+(v/1e3).toFixed(0)+'K';return s+Math.round(v||0);}
 function fmtN(v){return new Intl.NumberFormat('pt-BR').format(Math.round(v||0));}
 
 function startClock(){
@@ -2395,6 +2396,7 @@ function applyMetaData(data){
   const {summary,campaigns,daily,account,whatsapp_funnel}=data;
   const cur=account.currency||'USD';
   const sym=cur==='BRL'?'R$':'$';
+  window.CUR_SYM=sym;
 
   // Currency-aware formatter for Meta data
   window.fmtMeta=(v)=>`${sym}${new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(v||0)}`;
@@ -2403,6 +2405,19 @@ function applyMetaData(data){
     if(v>=1e3) return sym+(v/1e3).toFixed(0)+'K';
     return sym+Math.round(v||0);
   };
+  // Override global fmtK so todos os charts/labels usem a moeda correta
+  window.fmtK=window.fmtMetaK;
+
+  // Swap "R$" → símbolo correto em todo o DOM (para textos estáticos)
+  if(sym!=='R$'){
+    const walk=(node)=>{
+      if(node.nodeType===3){ if(node.nodeValue.includes('R$')) node.nodeValue=node.nodeValue.replace(/R\$/g,sym); }
+      else if(node.nodeType===1 && !['SCRIPT','STYLE'].includes(node.tagName)){
+        for(const c of node.childNodes) walk(c);
+      }
+    };
+    walk(document.body);
+  }
 
   // ── Summary fields ────────────────────────────────────────────────
   D.spend=summary.spend;
