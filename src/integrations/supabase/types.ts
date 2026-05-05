@@ -16,36 +16,66 @@ export type Database = {
     Tables: {
       sales_team: {
         Row: {
+          ad_account: string | null
+          bm_name: string | null
           color: string
           conversions: number
           created_at: string
+          email: string | null
+          goal: number | null
+          hired_at: string | null
           id: string
           initials: string
           name: string
+          notes: string | null
+          phone: string | null
+          region: string | null
           revenue: number
+          role: string | null
           sales: number
+          status: string | null
           updated_at: string
         }
         Insert: {
+          ad_account?: string | null
+          bm_name?: string | null
           color?: string
           conversions?: number
           created_at?: string
+          email?: string | null
+          goal?: number | null
+          hired_at?: string | null
           id?: string
           initials: string
           name: string
+          notes?: string | null
+          phone?: string | null
+          region?: string | null
           revenue?: number
+          role?: string | null
           sales?: number
+          status?: string | null
           updated_at?: string
         }
         Update: {
+          ad_account?: string | null
+          bm_name?: string | null
           color?: string
           conversions?: number
           created_at?: string
+          email?: string | null
+          goal?: number | null
+          hired_at?: string | null
           id?: string
           initials?: string
           name?: string
+          notes?: string | null
+          phone?: string | null
+          region?: string | null
           revenue?: number
+          role?: string | null
           sales?: number
+          status?: string | null
           updated_at?: string
         }
         Relationships: []
