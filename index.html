@@ -3034,13 +3034,45 @@ function removeFilter(k){
   const el=document.getElementById(map[k]); if(el)el.value=def;
   applyFilters(true);
 }
+// Recorta o array daily real conforme o período escolhido
+function _sliceDailyByPeriod(daily, period){
+  if(!daily||!daily.length)return [];
+  const n=daily.length;
+  switch(period){
+    case 'today':         return daily.slice(-1);
+    case 'yesterday':     return daily.slice(-2,-1);
+    case 'last_7_days':   return daily.slice(-7);
+    case 'last_30_days':  return daily.slice(-30);
+    case 'last_90_days':  return daily.slice(-90);
+    case 'this_month':{
+      // Pega entradas cujo "MM" == mês da última entrada
+      const lastMM=(daily[n-1].date||'').slice(0,2);
+      return daily.filter(d=>(d.date||'').slice(0,2)===lastMM);
+    }
+    case 'last_month':{
+      const lastMM=(daily[n-1].date||'').slice(0,2);
+      const prevMM=String(((parseInt(lastMM,10)||1)+10)%12+1).padStart(2,'0');
+      return daily.filter(d=>(d.date||'').slice(0,2)===prevMM);
+    }
+    case 'this_year':     return daily.slice();
+    default:              return daily.slice();
+  }
+}
 function applyFiltersToKPIs(){
   const f=window.__filters||getActiveFilters();
   const base=window.__baseSnapshot;
   const baseD=window.__baseD;
   if(!base||!base.rev||!baseD)return;
 
-  const periodM=PERIOD_MULT[f.period]||1;
+  // ─── Fator de período REAL baseado no array daily da Meta ─────────
+  const dailyAll=baseD.daily||[];
+  const sliced=_sliceDailyByPeriod(dailyAll, f.period);
+  const sumRev=sliced.reduce((a,d)=>a+(d._rev||0),0);
+  const baseRevDaily=dailyAll.reduce((a,d)=>a+(d._rev||0),0)||base.rev||1;
+  const periodM=baseRevDaily>0 ? (sumRev/baseRevDaily) : 1;
+  // expõe o subset para gráficos diários respeitarem o período
+  window.__dailyPeriodSubset=sliced;
+
   const channelM=CHANNEL_MULT[f.channel]||1;
   const catM=CAT_MULT[f.category]||1;
   const statusM=STATUS_MULT[f.status]||1;
@@ -3048,9 +3080,13 @@ function applyFiltersToKPIs(){
   const m=periodM*channelM*catM*statusM*sellerM;
   const spendFactor=(f.channel==='organic'||f.channel==='recompra')?0.05:1;
 
-  const rev=base.rev*m;
-  const orders=Math.max(0,Math.round(base.orders*m));
-  const spend=base.spend*m*spendFactor;
+  // KPIs do período: usa dados reais quando filtros não-período == default
+  const onlyPeriod=(f.channel==='all'&&f.category==='all'&&f.seller==='all'&&f.status==='all');
+  const realSpend=sliced.reduce((a,d)=>a+(d._spend||0),0);
+  const realOrders=sliced.reduce((a,d)=>a+(d._pur||0),0);
+  const rev= onlyPeriod ? sumRev : base.rev*m;
+  const orders= onlyPeriod ? realOrders : Math.max(0,Math.round(base.orders*m));
+  const spend= onlyPeriod ? realSpend*spendFactor : base.spend*m*spendFactor;
   S.comp={
     spend, orders, rev,
     margin:base.margin,
@@ -3073,12 +3109,15 @@ function applyFiltersToKPIs(){
   }));
   // WhatsApp funnel
   D.whatsapp=(baseD.whatsapp||[]).map(w=>({...w,n:Math.max(0,Math.round((w.n||0)*m))}));
-  // Daily series
-  D.daily=(baseD.daily||[]).map(d=>{
+  // Daily series — usa subset real do período (sem escalar)
+  D.daily=(window.__dailyPeriodSubset||baseD.daily||[]).map(d=>{
     const out={...d};
-    ['rev','spend','conv','msgs','clicks','impr','_pur'].forEach(k=>{
-      if(typeof out[k]==='number')out[k]=k==='rev'||k==='spend'?out[k]*m*(k==='spend'?spendFactor:1):Math.max(0,Math.round(out[k]*m));
-    });
+    // aplica somente filtros não-período (channel/cat/etc) ao subset real
+    const mm=channelM*catM*statusM*sellerM*(spendFactor);
+    if(typeof out._rev==='number')   out._rev   = out._rev*(channelM*catM*statusM*sellerM);
+    if(typeof out._spend==='number') out._spend = out._spend*(channelM*catM*statusM*sellerM)*spendFactor;
+    if(typeof out._pur==='number')   out._pur   = Math.max(0,Math.round(out._pur*(channelM*catM*statusM*sellerM)));
+    if(typeof out._msgs==='number')  out._msgs  = Math.max(0,Math.round(out._msgs*(channelM*catM*statusM*sellerM)));
     return out;
   });
   // Bafisco / Upsell
