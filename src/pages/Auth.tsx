@@ -30,11 +30,12 @@ export default function Auth() {
       "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap";
     document.head.appendChild(link);
 
+    const goDash = () => { window.location.href = "/"; };
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate("/", { replace: true });
+      if (session) goDash();
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/", { replace: true });
+      if (session) goDash();
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
@@ -60,7 +61,7 @@ export default function Auth() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) toast({ title: "Falha no login", description: error.message, variant: "destructive" });
-    else navigate("/", { replace: true });
+    else window.location.href = "/";
   };
 
   const handleSignup = async (e: React.FormEvent) => {
