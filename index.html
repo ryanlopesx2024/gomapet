@@ -2671,6 +2671,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }
   await loadTeam(); await loadStock();
   setInterval(()=>{loadTeam();loadStock();},15000);
+  if(window.hideBootLoader)window.hideBootLoader();
 });
 
 /* ═══ TIME + ESTOQUE — CRUD via Supabase REST ═══════════════ */
