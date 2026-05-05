@@ -2573,15 +2573,27 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{renderAlertas();}catch(e){console.error(e);}
 
   if(META.accountId){
-    try{
-      await fetchMetaData(META.accountId);
-    }catch(e){
-      console.warn('Meta fetch failed:',e.message);
-      const chip=document.getElementById('metaChip');
-      const dot=document.getElementById('metaDot');
-      if(chip)chip.className='meta-chip err';
-      if(dot)dot.style.background='var(--red)';
-    }
+    const load=async()=>{
+      try{
+        await fetchMetaData(META.accountId);
+        const chip=document.getElementById('metaChip');
+        const dot=document.getElementById('metaDot');
+        if(chip)chip.className='meta-chip ok';
+        if(dot)dot.style.background='var(--green)';
+      }catch(e){
+        console.warn('Meta fetch failed:',e.message);
+        const chip=document.getElementById('metaChip');
+        const dot=document.getElementById('metaDot');
+        if(chip)chip.className='meta-chip err';
+        if(dot)dot.style.background='var(--red)';
+      }
+    };
+    await load();
+    // Auto-refresh a cada 60s — força bypass de cache
+    setInterval(()=>{
+      const u=`https://xfgfalglgfamavemedew.supabase.co/functions/v1/meta-ads?force=1&apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM&account_id=${encodeURIComponent(META.accountId)}`;
+      fetch(u).then(r=>r.json()).then(d=>{if(d.ok){META.lastData=d;applyMetaData(d);}}).catch(()=>{});
+    },60000);
   }
 });
 </script>
