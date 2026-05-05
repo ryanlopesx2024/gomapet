@@ -2634,10 +2634,10 @@ function toast(title,msg,type='ok'){
 
 /* ═══ BOOT ══════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',async()=>{
-  try{startClock();}catch(e){console.error(e);}
-  try{compute();}catch(e){console.error(e);}
-  try{renderVendas();}catch(e){console.error(e);}
-  try{renderAlertas();}catch(e){console.error(e);}
+  try{startClock();}catch(e){console.error('Erro ao iniciar relógio:',e);}
+  try{compute();}catch(e){console.error('Erro ao calcular dados:',e);}
+  try{renderVendas();}catch(e){console.error('Erro ao renderizar vendas:',e);}
+  try{renderAlertas();}catch(e){console.error('Erro ao renderizar alertas:',e);}
 
   if(META.accountId){
     const load=async()=>{
