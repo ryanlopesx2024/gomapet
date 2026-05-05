@@ -433,7 +433,7 @@ td{padding:10px 14px;font-size:12.5px;}
   <div class="sb-foot">
     <div class="api-chip">
       <div class="dot"></div>
-      <div class="api-txt">🐕 GomaPet · Demo</div>
+      <div class="api-txt">🐕 GomaPet · Live</div>
     </div>
   </div>
 </aside>
@@ -1216,9 +1216,9 @@ function SCALES(o={}){
   const{yCb=null,xCb=null,yMin,yMax,hide=false}=o;
   return{
     x:{display:!hide,grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-      ticks:{color:'#40405a',font:{family:'Inter',size:10},maxTicksLimit:10,callback:xCb||undefined}},
+      ticks:{color:'#cfe0d2',font:{family:'Inter',size:10},maxTicksLimit:10,callback:xCb||undefined}},
     y:{display:!hide,grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},min:yMin,max:yMax,
-      ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:yCb||(v=>(window.CUR_SYM||'R$')+fmtN(v))}}
+      ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:yCb||(v=>(window.CUR_SYM||'R$')+fmtN(v))}}
   };
 }
 function animBars(){
@@ -1678,11 +1678,11 @@ function renderTrafego(){
         tooltip:TT({callbacks:{label:x=>`${x.dataset.label}: inv ${window.CUR_SYM||'R$'}${(x.parsed.x).toFixed(0)}K · rev ${window.CUR_SYM||'R$'}${(x.parsed.y).toFixed(0)}K`}})},
       scales:{
         x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#40405a',font:{size:10}}},
+          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
+          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}},
         y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#40405a',font:{size:10}}}
+          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
+          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}}
       }}});
   }
 
@@ -1725,7 +1725,7 @@ function renderTrafego(){
       plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
         tooltip:TT()},
       scales:{
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'Inter',size:10}}},
+        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'Inter',size:10}}},
         yCtr:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},position:'left',
           ticks:{color:'#5b9cf6',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}},
         yCpa:{grid:{display:false},border:{color:'transparent'},position:'right',
@@ -1798,7 +1798,7 @@ function renderFunil(){
           tooltip:TT({callbacks:{label:x=>` Perda: ${x.raw}%`}})},
         scales:{
           y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#6060a0',font:{family:'Inter',size:10}}},
-          x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}}
+          x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}}
         }}});
     }
   }
@@ -1959,7 +1959,7 @@ function renderRecompra(){
       plugins:{legend:{display:false},tooltip:TT({callbacks:{label:x=>` LTV est.: ${fmtBRL(x.raw)}`}})},
       scales:{
         y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#6060a0',font:{family:'Inter',size:11}}},
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>fmtBRL(v)}}
+        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>fmtBRL(v)}}
       }}});
   }
 }
@@ -2177,8 +2177,8 @@ function renderEstoque(){
     plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:11},usePointStyle:true,padding:12}},
       tooltip:TT({callbacks:{label:x=>` ${x.dataset.label}: ${fmtN(x.raw)} un.`}})},
     scales:{
-      x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'Inter',size:10},maxTicksLimit:10}},
-      y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#40405a',font:{family:'JetBrains Mono',size:10},callback:v=>fmtN(v)+' un.'}}
+      x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'Inter',size:10},maxTicksLimit:10}},
+      y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>fmtN(v)+' un.'}}
     }}});
 }
 
