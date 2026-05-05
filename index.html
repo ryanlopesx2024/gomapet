@@ -1740,10 +1740,11 @@ function renderTrafego(){
   // Account summary KPIs — always re-render with real data
   const trafKpis=document.getElementById('traf-kpis');
   if(trafKpis){
-    const inv=D.spend||D.camps.reduce((a,cp)=>a+cp.inv,0);
-    const rev=D.rev||D.camps.reduce((a,cp)=>a+cp.rev,0);
-    const roasO=D.roas||(rev/inv)||0;
-    const cpaO=D.cpa||Math.round(inv/(D.conv||1));
+    const inv=c.spend||D.spend||D.camps.reduce((a,cp)=>a+cp.inv,0);
+    const rev=c.rev||D.rev||D.camps.reduce((a,cp)=>a+cp.rev,0);
+    const orders=c.orders||D.conv||0;
+    const roasO=c.roas||(rev/inv)||0;
+    const cpaO=c.cpa||Math.round(inv/(orders||1));
     const ctrO=D.ctr||(D.camps.reduce((a,cp)=>a+cp.ctr,0)/Math.max(D.camps.length,1));
     const roasSub=roasO>=4?'pos':roasO>=3?'warn':'neg';
     trafKpis.innerHTML=`
@@ -1752,13 +1753,13 @@ function renderTrafego(){
         <div class="kc-sub neu">${D.camps.length} campanhas</div></div>
       <div class="card card-p" style="border-left:3px solid var(--blue)">
         <div class="kc-lbl">Receita Total</div><div class="kc-val">${fmtK(rev)}</div>
-        <div class="kc-sub pos">últimos 30 dias</div></div>
+        <div class="kc-sub pos">período filtrado</div></div>
       <div class="card card-p" style="border-left:3px solid var(--ora)">
         <div class="kc-lbl">ROAS Geral</div><div class="kc-val">${roasO.toFixed(2)}×</div>
         <div class="kc-sub ${roasSub}">${roasO>=4?'saudável':roasO>=3?'atenção':'crítico'}</div></div>
       <div class="card card-p" style="border-left:3px solid var(--red)">
         <div class="kc-lbl">CPA Médio</div><div class="kc-val">$${cpaO}</div>
-        <div class="kc-sub neu">${D.conv||'—'} conversões</div></div>
+        <div class="kc-sub neu">${orders?fmtN(orders):'—'} conversões</div></div>
       <div class="card card-p" style="border-left:3px solid var(--pur)">
         <div class="kc-lbl">CTR Médio</div><div class="kc-val">${ctrO.toFixed(2)}%</div>
         <div class="kc-sub neu">${D.impressions?fmtN(D.impressions)+' impr.':'todas campanhas'}</div></div>`;
