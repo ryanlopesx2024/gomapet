@@ -1262,7 +1262,7 @@ function navTo(pg){
   const doNav=()=>{
     document.querySelector('.content')&&(document.querySelector('.content').scrollTop=0);
     next.classList.add('active');
-    try{renders[pg]&&renders[pg]();}catch(e){console.error('render',pg,e);}
+    try{renders[pg]&&renders[pg]();}catch(e){console.error('Erro ao renderizar página',pg,e);}
   };
   if(cur&&cur!==next){
     cur.classList.add('out');
