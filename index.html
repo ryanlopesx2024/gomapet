@@ -2723,8 +2723,44 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }
   await loadTeam(); await loadStock();
   setInterval(()=>{loadTeam();loadStock();},15000);
+  setTimeout(populateSellerFilter,500);
   if(window.hideBootLoader)window.hideBootLoader();
 });
+
+/* ═══ FILTROS ═══ */
+function populateSellerFilter(){
+  const sel=document.getElementById('fSeller'); if(!sel||!window.D||!D.team)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">Todos vendedores</option>'+D.team.map(p=>`<option value="${p.n}">${p.n}</option>`).join('');
+  sel.value=cur||'all';
+}
+function getActiveFilters(){
+  return {
+    period:document.getElementById('dFilter')?.value||'last_30_days',
+    channel:document.getElementById('fChannel')?.value||'all',
+    category:document.getElementById('fCat')?.value||'all',
+    seller:document.getElementById('fSeller')?.value||'all',
+    status:document.getElementById('fStatus')?.value||'all',
+  };
+}
+function applyFilters(){
+  const f=getActiveFilters();
+  document.querySelectorAll('.filters .sel').forEach(el=>{
+    const s=el.querySelector('select'); if(!s)return;
+    if(s.value&&s.value!=='all'&&s.value!=='last_30_days')el.classList.add('active');else el.classList.remove('active');
+  });
+  window.__filters=f;
+  if(typeof renderAll==='function')try{renderAll();}catch(e){}
+  if(typeof renderVendas==='function')try{renderVendas();}catch(e){}
+  console.log('[filtros]',f);
+}
+function clearFilters(){
+  ['fChannel','fCat','fSeller','fStatus'].forEach(id=>{
+    const el=document.getElementById(id); if(el)el.value='all';
+  });
+  const d=document.getElementById('dFilter'); if(d)d.value='last_30_days';
+  applyFilters();
+}
 
 /* ═══ TIME + ESTOQUE — CRUD via Supabase REST ═══════════════ */
 const SB_URL='https://xfgfalglgfamavemedew.supabase.co';
