@@ -1283,9 +1283,12 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
     <!-- BM / Tráfego -->
     <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fab fa-facebook"></i> BM & Conta de Anúncios</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <input class="meta-input" id="teamBm" placeholder="Nome da BM (ex: BM Principal)">
-      <input class="meta-input" id="teamAdAccount" placeholder="ID da conta (act_123456789)">
+      <input class="meta-input" id="teamBm" list="teamBmList" placeholder="Selecione ou digite a BM" autocomplete="off">
+      <datalist id="teamBmList"></datalist>
+      <input class="meta-input" id="teamAdAccount" list="teamAdAccountList" placeholder="Selecione ou digite (act_123...)" autocomplete="off">
+      <datalist id="teamAdAccountList"></datalist>
     </div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:6px"><i class="fas fa-info-circle"></i> Sugestões vêm das BMs/contas já cadastradas e da conta Meta conectada.</div>
 
     <!-- Performance -->
     <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.2px;margin:14px 0 8px;font-family:'Fredoka',sans-serif"><i class="fas fa-chart-line"></i> Performance & Meta</div>
