@@ -1714,7 +1714,8 @@ function renderVendas(){
   const recRev=D.repurchase.rev;
 
   // ── Meta do Mês ────────────────────────────────────────────────
-  const metaGoal=Math.round(totalRev*1.25/1000)*1000;
+  const savedGoal=parseFloat(localStorage.getItem('shop_month_goal')||'0');
+  const metaGoal=savedGoal>0?savedGoal:Math.round(totalRev*1.25/1000)*1000;
   const pct=Math.min(100,Math.round(totalRev/metaGoal*100));
   const gap=metaGoal-totalRev;
   const elR=document.getElementById('v-realizado');
@@ -1724,7 +1725,20 @@ function renderVendas(){
   const elGap=document.getElementById('v-meta-gap');
   const elProj=document.getElementById('v-meta-projs');
   if(elR)elR.textContent=fmtK(totalRev);
-  if(elM)elM.textContent=fmtK(metaGoal);
+  if(elM){
+    elM.innerHTML=fmtK(metaGoal)+' <i class="fas fa-pen" style="font-size:10px;color:var(--g1);margin-left:4px;cursor:pointer" title="Editar meta"></i>';
+    elM.style.cursor='pointer';
+    elM.title='Clique para editar a meta do mês';
+    elM.onclick=()=>{
+      const cur=savedGoal>0?savedGoal:metaGoal;
+      const v=prompt('Meta de faturamento do mês (R$):',String(cur));
+      if(v===null)return;
+      const n=parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',','.'))||0;
+      if(n<=0){localStorage.removeItem('shop_month_goal');}
+      else{localStorage.setItem('shop_month_goal',String(n));}
+      renderVendas();
+    };
+  }
   if(elBar)elBar.style.width=pct+'%';
   if(elPct)elPct.textContent=pct+'% atingido';
   if(elGap)elGap.textContent=gap>0?'Faltam '+fmtK(gap):'Meta atingida!';
