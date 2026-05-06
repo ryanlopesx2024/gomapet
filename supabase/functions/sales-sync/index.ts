@@ -29,7 +29,7 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
   if (!YAMPI_ALIAS || !YAMPI_TOKEN || !YAMPI_SECRET) {
     return { ok: false, configured: false, orders: [], total: 0, count: 0 };
   }
-  const cacheKey = `yampi:${since}:${until}`;
+  const cacheKey = `yampi:${since}:${until}:${summaryOnly ? "summary" : "full"}`;
   const cached = YAMPI_CACHE.get(cacheKey);
   if (cached && cached.expires > Date.now()) return { ...cached.data, cached: true };
   const inflight = YAMPI_INFLIGHT.get(cacheKey);
@@ -138,9 +138,10 @@ Deno.serve(async (req) => {
     const since = url.searchParams.get("since") || d30;
     const until = url.searchParams.get("until") || today;
     const src = url.searchParams.get("source"); // yampi | payt | (all)
+    const summaryOnly = url.searchParams.get("summary") === "1";
 
     const out: any = { ok: true, since, until };
-    if (!src || src === "yampi") out.yampi = await fetchYampi(since, until).catch(e => ({ ok: false, error: String(e) }));
+    if (!src || src === "yampi") out.yampi = await fetchYampi(since, until, summaryOnly).catch(e => ({ ok: false, error: String(e) }));
     if (!src || src === "payt") out.payt = await fetchPayt(since, until).catch(e => ({ ok: false, error: String(e) }));
     out.combined = {
       total: (out.yampi?.total || 0) + (out.payt?.total || 0),
