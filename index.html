@@ -3253,6 +3253,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
           if(dot)dot.style.background='var(--green)';
           const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
           const lu=document.getElementById('metaLastUpdate'); if(lu)lu.textContent='Atualizado '+ts;
+          const lu2=document.getElementById('trafLastUpdate'); if(lu2)lu2.textContent='Atualizado '+ts;
         }
       }catch(e){console.warn('auto-refresh falhou:',e.message);}
     };
