@@ -1815,15 +1815,17 @@ function renderVendas(){
         </div>`).join('')}
     </div>`;
 
-  // ── Produto Principal vs Upsell ────────────────────────────────
+  // ── Produto Principal (Gomapet) vs Upsell ──────────────────────
+  const MAIN_KEYS=['gomapet','escova','goma pet'];
   const UPSELL_KEYS=['bafisco','avant','upsell','cross','kit','premium','combo','order bump','bump'];
-  const isUp=n=>{const s=(n||'').toLowerCase();return UPSELL_KEYS.some(k=>s.includes(k));};
+  const isMain=n=>{const s=(n||'').toLowerCase();return MAIN_KEYS.some(k=>s.includes(k));};
+  const isUp=n=>{const s=(n||'').toLowerCase();return !isMain(n)&&UPSELL_KEYS.some(k=>s.includes(k));};
   let upRev=0, upConv=0, mainRev=0, mainConv=0;
   const salesByName=window.SALES_BY_NAME||[];
   if(salesByName.length){
     salesByName.forEach(p=>{
-      if(isUp(p.n)){upRev+=p.rev;upConv+=p.conv;}
-      else{mainRev+=p.rev;mainConv+=p.conv;}
+      if(isMain(p.n)){mainRev+=p.rev;mainConv+=p.conv;}
+      else if(isUp(p.n)){upRev+=p.rev;upConv+=p.conv;}
     });
   } else {
     const camps=D.camps||[];
@@ -1837,21 +1839,21 @@ function renderVendas(){
   if(elPU){
     elPU.innerHTML=`
       <div class="card card-p" style="border-top:3px solid var(--blue)">
-        <div class="kc-lbl">Produto Principal</div>
+        <div class="kc-lbl">Produto Principal — Gomapet</div>
         <div class="kc-val">${fmtBRL(mainRev)}</div>
         <div class="kc-sub" style="color:var(--blue)">${fmtN(mainConv)} compras</div>
       </div>
       <div class="card card-p" style="border-top:3px solid var(--ora)">
-        <div class="kc-lbl">Upsell (Bafisco/Avant/Kits)</div>
+        <div class="kc-lbl">Faturamento Upsell</div>
         <div class="kc-val">${fmtBRL(upRev)}</div>
-        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% do principal · ${fmtN(upConv)} vendas</div>
+        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% de upsell sobre principal · ${fmtN(upConv)} vendas</div>
       </div>`;
   }
 
-  // ── Ranking de Vendas por Kit ──────────────────────────────────
+  // ── Ranking de Vendas por Kit (apenas upsell/kits) ─────────────
   let kits;
   if(salesByName.length){
-    kits=salesByName.slice(0,8).map(p=>({n:p.n,conv:p.conv,rev:p.rev,roas:0}));
+    kits=salesByName.filter(p=>isUp(p.n)).slice(0,8).map(p=>({n:p.n,conv:p.conv,rev:p.rev,roas:0}));
   } else {
     const camps=D.camps||[];
     kits=camps.filter(x=>isUp(x.n)).sort((a,b)=>(b.conv||0)-(a.conv||0)).slice(0,8);
