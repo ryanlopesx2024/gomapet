@@ -137,6 +137,48 @@ export type Database = {
         }
         Relationships: []
       }
+      yampi_orders: {
+        Row: {
+          created_at: string
+          customer: Json | null
+          event: string | null
+          id: string
+          items: Json | null
+          order_id: string
+          ordered_at: string | null
+          raw: Json | null
+          status: string | null
+          total: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer?: Json | null
+          event?: string | null
+          id?: string
+          items?: Json | null
+          order_id: string
+          ordered_at?: string | null
+          raw?: Json | null
+          status?: string | null
+          total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer?: Json | null
+          event?: string | null
+          id?: string
+          items?: Json | null
+          order_id?: string
+          ordered_at?: string | null
+          raw?: Json | null
+          status?: string | null
+          total?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
