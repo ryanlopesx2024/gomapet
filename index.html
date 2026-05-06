@@ -2371,7 +2371,7 @@ function renderTime(){
       <td class="mono">${fmtN(Math.round(p.s*p.c/100))}</td>
       <td><span class="mono" style="font-size:11px;color:${p.c<goal?'var(--red)':'var(--green)'}">${p.c}%</span></td>
       <td class="mono" style="font-weight:700;color:${p.col}">${fmtBRL(p.r)}</td>
-      <td class="mono" style="font-size:10px;color:var(--g1)">${p.goal>0?fmtBRL(p.goal):'—'}</td>
+      <td class="mono" style="font-size:10px;color:var(--g1);cursor:pointer" onclick="editGoal('${p.id}')" title="Clique para editar a meta">${p.goal>0?fmtBRL(p.goal):'—'} <i class="fas fa-pen" style="font-size:8px;color:var(--cream);margin-left:4px"></i></td>
       <td class="mono" style="font-weight:700;color:${goalCol};font-size:10px">${goalPct==null?'—':goalPct.toFixed(0)+'%'}</td>
       <td style="font-size:10px;line-height:1.4">
         ${p.bm?`<div style="color:var(--w)">${p.bm}</div>`:''}
@@ -3305,6 +3305,17 @@ function openTeamModal(id){
 }
 function closeTeamModal(){document.getElementById('teamOverlay').style.display='none';}
 function editTeam(id){openTeamModal(id);}
+async function editGoal(id){
+  const p=D.team.find(x=>x.id===id); if(!p)return;
+  const cur=p.goal||0;
+  const v=prompt(`Meta de faturamento mensal para ${p.n} (R$):`, cur);
+  if(v===null)return;
+  const goal=parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(',','.'))||0;
+  try{
+    await sbReq(`sales_team?id=eq.${id}`,'PATCH',{goal});
+    await loadTeam();
+  }catch(e){alert('Erro ao salvar meta: '+e.message);}
+}
 async function deleteTeam(id){
   if(!confirm('Excluir este vendedor?'))return;
   try{await sbReq(`sales_team?id=eq.${id}`,'DELETE'); await loadTeam();}catch(e){alert('Erro: '+e.message);}
