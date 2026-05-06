@@ -2884,7 +2884,7 @@ function renderYampi(){
   }
   // Ranking produtos
   const byName={};
-  filtered.forEach(o=>(o.items||[]).forEach(it=>{
+  dedup.forEach(o=>(o.items||[]).forEach(it=>{
     const n=(it.name||'Sem nome').trim();
     if(!byName[n])byName[n]={n,qty:0,rev:0};
     byName[n].qty+=(it.qty||1);
