@@ -1,4 +1,4 @@
 project_id = "xfgfalglgfamavemedew"
 
-[functions.meta-ads]
+[functions.yampi-webhook]
 verify_jwt = false
