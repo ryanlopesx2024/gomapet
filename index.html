@@ -495,6 +495,9 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
   <div class="nav"    data-pg="estoque"  onclick="navTo('estoque')"><i class="fas fa-boxes-stacked"></i>Estoque</div>
   <div class="nav"    data-pg="alertas"  onclick="navTo('alertas')"><i class="fas fa-bell"></i>Alertas<span class="pip pip-r" id="alertPip">0</span></div>
 
+  <div class="sb-sect" style="margin-top:6px">Lojas</div>
+  <div class="nav"    data-pg="yampi"    onclick="navTo('yampi')"><i class="fas fa-store"></i>Yampi<span class="pip pip-g">LIVE</span></div>
+
   <div class="sb-foot">
     <div class="api-chip">
       <div class="dot"></div>
@@ -1220,6 +1223,62 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
       </div>
     </div>
 
+    <div class="page" id="pg-yampi">
+      <div class="sec">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--w);font-family:'Fredoka',sans-serif">🛒 Yampi · A Lojinha do Pet</div>
+            <div style="font-size:11px;color:var(--g1);margin-top:2px">Dados em tempo real direto da API Yampi (Dooki)</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="ympPeriod" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
+              <option value="7">Últimos 7 dias</option>
+              <option value="30" selected>Últimos 30 dias</option>
+              <option value="90">Últimos 90 dias</option>
+            </select>
+            <select id="ympStatus" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
+              <option value="paid">Apenas pagos</option>
+              <option value="all">Todos os status</option>
+              <option value="waiting_payment">Aguardando pagto</option>
+              <option value="canceled">Cancelados</option>
+            </select>
+            <button class="meta-btn" id="ympRefresh" style="width:auto;padding:6px 14px;font-size:12px"><i class="fas fa-sync"></i> Atualizar</button>
+          </div>
+        </div>
+        <div class="g4" id="ymp-kpis"></div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="g2">
+          <div>
+            <div class="sec-title">Faturamento Diário (Yampi)</div>
+            <div class="card card-p"><canvas id="cYmpDaily" height="180"></canvas></div>
+          </div>
+          <div>
+            <div class="sec-title">Distribuição por Status</div>
+            <div class="card card-p"><canvas id="cYmpStatus" height="180"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="sec-title">Ranking de Produtos Vendidos</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="t" style="width:100%">
+            <thead><tr><th>#</th><th>Produto</th><th>Qtd</th><th>Receita</th><th>Ticket Médio</th></tr></thead>
+            <tbody id="ymp-products"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="sec-title">Últimos Pedidos</div>
+        <div class="card" style="padding:0;overflow:hidden;max-height:520px;overflow-y:auto">
+          <table class="t" style="width:100%">
+            <thead><tr><th>ID</th><th>Data</th><th>Itens</th><th>Status</th><th>Total</th></tr></thead>
+            <tbody id="ymp-orders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 
   <!-- META LIVE BANNER — inside .main, below content -->
@@ -1553,7 +1612,7 @@ function updateKPIs(){
 
 /* ═══ NAVIGATION ═══════════════════════════════════════════ */
 const TITLES={vendas:'Vendas',upsell:'Upsell Bafisco',trafego:'Tráfego Pago',
-  funil:'Funil WhatsApp',recompra:'Recompra',time:'Time de Vendas',estoque:'Estoque',alertas:'Alertas'};
+  funil:'Funil WhatsApp',recompra:'Recompra',time:'Time de Vendas',estoque:'Estoque',alertas:'Alertas',yampi:'Yampi · A Lojinha do Pet'};
 
 function navTo(pg){
   document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
@@ -2761,11 +2820,130 @@ function renderAlertas(){
     </div>`).join('');
 }
 
+/* ═══ YAMPI PAGE ═════════════════════════════════════════════ */
+window.YMP={data:null,loading:false,period:30,status:'paid'};
+async function loadYampiData(force){
+  if(window.YMP.loading)return;
+  window.YMP.loading=true;
+  try{
+    const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
+    const SUP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
+    const days=parseInt(window.YMP.period||30,10);
+    const today=new Date();
+    const since=new Date(today.getTime()-(days-1)*86400000).toISOString().slice(0,10);
+    const until=today.toISOString().slice(0,10);
+    const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?source=yampi&since=${since}&until=${until}&apikey=${SUP_KEY}`);
+    const d=await r.json();
+    window.YMP.data=d;
+    if(document.querySelector('[data-pg="yampi"].on'))renderYampi();
+  }catch(e){console.warn('yampi load fail',e.message);}
+  finally{window.YMP.loading=false;}
+}
+function renderYampi(){
+  const d=window.YMP.data;
+  const kpis=document.getElementById('ymp-kpis');
+  const prods=document.getElementById('ymp-products');
+  const ords=document.getElementById('ymp-orders');
+  if(!d||!d.yampi){
+    if(kpis)kpis.innerHTML='<div class="card card-p" style="grid-column:1/-1;text-align:center;color:var(--g1)">Carregando dados da Yampi…</div>';
+    if(!d)loadYampiData();
+    return;
+  }
+  if(!d.yampi.configured){
+    if(kpis)kpis.innerHTML='<div class="card card-p" style="grid-column:1/-1;text-align:center;color:var(--ora)">⚠ Credenciais Yampi não configuradas no backend.</div>';
+    return;
+  }
+  const all=d.yampi.orders||[];
+  const st=window.YMP.status||'paid';
+  const filtered=st==='all'?all:all.filter(o=>{
+    const s=(o.status||'').toLowerCase();
+    if(st==='paid')return /paid|approved|aprovad|pago/.test(s);
+    if(st==='waiting_payment')return /waiting|pending|aguard/.test(s);
+    if(st==='canceled')return /cancel|refund|estorn/.test(s);
+    return true;
+  });
+  const total=filtered.reduce((a,o)=>a+(o.total||0),0);
+  const tkt=filtered.length?total/filtered.length:0;
+  const itemsCount=filtered.reduce((a,o)=>a+(o.items||[]).reduce((s,it)=>s+(it.qty||1),0),0);
+  if(kpis){
+    kpis.innerHTML=`
+      <div class="card card-p" style="border-top:3px solid var(--green)"><div class="kc-lbl">Faturamento</div><div class="kc-val">${fmtBRL(total)}</div><div class="kc-sub pos">${filtered.length} pedidos</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(filtered.length)}</div><div class="kc-sub" style="color:var(--blue)">filtro: ${st}</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--ora)"><div class="kc-lbl">Ticket Médio</div><div class="kc-val">${fmtBRL(tkt)}</div><div class="kc-sub neu">por pedido</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--pur)"><div class="kc-lbl">Itens Vendidos</div><div class="kc-val">${fmtN(itemsCount)}</div><div class="kc-sub pur">unidades</div></div>`;
+  }
+  // Ranking produtos
+  const byName={};
+  filtered.forEach(o=>(o.items||[]).forEach(it=>{
+    const n=(it.name||'Sem nome').trim();
+    if(!byName[n])byName[n]={n,qty:0,rev:0};
+    byName[n].qty+=(it.qty||1);
+    byName[n].rev+=(it.price||0)*(it.qty||1);
+  }));
+  const top=Object.values(byName).sort((a,b)=>b.qty-a.qty).slice(0,15);
+  if(prods){
+    prods.innerHTML=top.length?top.map((p,i)=>`<tr>
+      <td><span class="lbrank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+      <td style="font-weight:600">${p.n}</td>
+      <td class="mono">${fmtN(p.qty)}</td>
+      <td class="mono" style="font-weight:700;color:var(--green)">${fmtBRL(p.rev)}</td>
+      <td class="mono">${fmtBRL(p.rev/p.qty)}</td>
+    </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--g1)">Sem itens.</td></tr>';
+  }
+  // Últimos pedidos
+  const sorted=[...filtered].sort((a,b)=>{
+    const da=new Date(a.created?.date||a.created||0).getTime();
+    const db=new Date(b.created?.date||b.created||0).getTime();
+    return db-da;
+  }).slice(0,80);
+  if(ords){
+    ords.innerHTML=sorted.length?sorted.map(o=>{
+      const dt=o.created?.date||o.created||'';
+      const dts=dt?new Date(dt.replace?.(' ','T')||dt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+      const items=(o.items||[]).map(it=>`${it.qty||1}× ${it.name||'item'}`).join(', ');
+      const s=(o.status||'').toLowerCase();
+      const cls=/paid|approved|pago/.test(s)?'b-g':/cancel|refund/.test(s)?'b-r':'b-gray';
+      return`<tr><td class="mono" style="font-size:10px">#${o.id}</td><td style="font-size:11px">${dts}</td><td style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${items||'—'}</td><td><span class="badge ${cls}">${o.status||'—'}</span></td><td class="mono" style="font-weight:700;color:var(--green)">${fmtBRL(o.total)}</td></tr>`;
+    }).join(''):'<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--g1)">Sem pedidos.</td></tr>';
+  }
+  // Charts
+  if(typeof Chart!=='undefined'){
+    const byDay={};
+    filtered.forEach(o=>{
+      const dt=o.created?.date||o.created||'';
+      const day=(dt+'').slice(0,10);
+      if(!day)return;
+      byDay[day]=(byDay[day]||0)+(o.total||0);
+    });
+    const days=Object.keys(byDay).sort();
+    const cv=document.getElementById('cYmpDaily');
+    if(cv){
+      if(window.CH_YMP_D)window.CH_YMP_D.destroy();
+      window.CH_YMP_D=new Chart(cv,{type:'line',data:{labels:days,datasets:[{label:'Receita',data:days.map(d=>byDay[d]),borderColor:'#29B347',backgroundColor:'rgba(41,179,71,.15)',fill:true,tension:.3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT()},scales:SCALES()}});
+    }
+    const stCnt={};
+    all.forEach(o=>{const s=o.status||'sem status';stCnt[s]=(stCnt[s]||0)+1;});
+    const cs=document.getElementById('cYmpStatus');
+    if(cs){
+      if(window.CH_YMP_S)window.CH_YMP_S.destroy();
+      window.CH_YMP_S=new Chart(cs,{type:'doughnut',data:{labels:Object.keys(stCnt),datasets:[{data:Object.values(stCnt),backgroundColor:['#29B347','#FFA94D','#A78BFA','#EF4444','#60A5FA','#FCD34D']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#cfe0d2',font:{size:10}}},tooltip:TT()}}});
+    }
+  }
+}
+document.addEventListener('change',e=>{
+  if(e.target.id==='ympPeriod'){window.YMP.period=e.target.value;loadYampiData(true);}
+  if(e.target.id==='ympStatus'){window.YMP.status=e.target.value;renderYampi();}
+});
+document.addEventListener('click',e=>{
+  if(e.target.closest&&e.target.closest('#ympRefresh')){loadYampiData(true);}
+});
+setInterval(()=>{if(document.querySelector('[data-pg="yampi"].on'))loadYampiData(true);},60000);
+
 /* ═══ RENDERS MAP ═══════════════════════════════════════════ */
 const renders={
   vendas:renderVendas, upsell:renderUpsell, trafego:renderTrafego,
   funil:renderFunil, recompra:renderRecompra, time:renderTime,
-  estoque:renderEstoque, alertas:renderAlertas
+  estoque:renderEstoque, alertas:renderAlertas, yampi:renderYampi
 };
 
 /* ═══ UTILS ════════════════════════════════════════════════ */
