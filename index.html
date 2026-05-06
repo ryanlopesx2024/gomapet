@@ -3295,7 +3295,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
       if(!d||!d.ok)return;
       window.SALES=d;
       const orders=[...(d.yampi?.orders||[]),...(d.payt?.orders||[])];
-      const paid=orders.filter(o=>/paid|approved|aprovad|pago/i.test(o.status||''));
+      const paid=orders.filter(o=>isPaidOrderStatus(o.status));
       const totalPaid=paid.reduce((a,o)=>a+(o.total||0),0);
       if(window.S&&S.comp&&paid.length){
         S.comp.rev=totalPaid;
