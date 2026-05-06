@@ -1749,13 +1749,22 @@ function renderVendas(){
     </div>`;
 
   // ── Produto Principal vs Upsell ────────────────────────────────
-  const UPSELL_KEYS=['bafisco','avant','upsell','cross','kit','premium','combo'];
+  const UPSELL_KEYS=['bafisco','avant','upsell','cross','kit','premium','combo','order bump','bump'];
   const isUp=n=>{const s=(n||'').toLowerCase();return UPSELL_KEYS.some(k=>s.includes(k));};
-  const camps=D.camps||[];
-  const upRev=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.rev||0),0);
-  const upConv=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.conv||0),0);
-  const mainRev=Math.max(totalRev-upRev,0);
-  const mainConv=Math.max((c.orders||0)-upConv,0);
+  let upRev=0, upConv=0, mainRev=0, mainConv=0;
+  const salesByName=window.SALES_BY_NAME||[];
+  if(salesByName.length){
+    salesByName.forEach(p=>{
+      if(isUp(p.n)){upRev+=p.rev;upConv+=p.conv;}
+      else{mainRev+=p.rev;mainConv+=p.conv;}
+    });
+  } else {
+    const camps=D.camps||[];
+    upRev=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.rev||0),0);
+    upConv=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.conv||0),0);
+    mainRev=Math.max(totalRev-upRev,0);
+    mainConv=Math.max((c.orders||0)-upConv,0);
+  }
   const upPctOfMain=mainConv>0?Math.round(upConv/mainConv*100):0;
   const elPU=document.getElementById('v-prod-vs-upsell');
   if(elPU){
@@ -1773,13 +1782,17 @@ function renderVendas(){
   }
 
   // ── Ranking de Vendas por Kit ──────────────────────────────────
-  const kits=camps.filter(x=>isUp(x.n))
-    .sort((a,b)=>(b.conv||0)-(a.conv||0))
-    .slice(0,8);
+  let kits;
+  if(salesByName.length){
+    kits=salesByName.slice(0,8).map(p=>({n:p.n,conv:p.conv,rev:p.rev,roas:0}));
+  } else {
+    const camps=D.camps||[];
+    kits=camps.filter(x=>isUp(x.n)).sort((a,b)=>(b.conv||0)-(a.conv||0)).slice(0,8);
+  }
   const kTb=document.getElementById('v-kits-tbody');
   if(kTb){
     if(!kits.length){
-      kTb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--g1);font-size:11px;padding:14px">Sem campanhas de kit identificadas no período.</td></tr>';
+      kTb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--g1);font-size:11px;padding:14px">Sem vendas no período.</td></tr>';
     } else {
       kTb.innerHTML=kits.map((k,i)=>`
         <tr>
@@ -1787,7 +1800,7 @@ function renderVendas(){
           <td style="font-weight:600">${k.n}</td>
           <td class="mono">${fmtN(k.conv||0)}</td>
           <td class="mono" style="font-weight:700;color:var(--green)">${fmtBRL(k.rev||0)}</td>
-          <td class="mono" style="color:var(--ora)">${(k.roas||0).toFixed(2)}×</td>
+          <td class="mono" style="color:var(--ora)">${k.roas?k.roas.toFixed(2)+'×':'—'}</td>
         </tr>`).join('');
     }
   }
@@ -3054,6 +3067,43 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }
   await loadTeam(); await loadStock();
   setInterval(()=>{loadTeam();loadStock();},15000);
+
+  // ── Yampi/Payt sync (vendas reais) ──────────────────────────────
+  const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
+  const SUP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
+  async function loadSales(){
+    try{
+      const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?apikey=${SUP_KEY}`);
+      const d=await r.json();
+      if(!d||!d.ok)return;
+      window.SALES=d;
+      const orders=[...(d.yampi?.orders||[]),...(d.payt?.orders||[])];
+      const paid=orders.filter(o=>/paid|approved|aprovad|pago/i.test(o.status||''));
+      const totalPaid=paid.reduce((a,o)=>a+(o.total||0),0);
+      if(window.S&&S.comp&&paid.length){
+        S.comp.rev=totalPaid;
+        S.comp.orders=paid.length;
+        S.comp.avgTkt=totalPaid/paid.length;
+      }
+      // Ranking por nome de produto
+      const byName={};
+      paid.forEach(o=>(o.items||[]).forEach(it=>{
+        const n=(it.name||'Sem nome').trim();
+        if(!byName[n])byName[n]={n,conv:0,rev:0};
+        byName[n].conv+=(it.qty||1);
+        byName[n].rev+=(it.price||0)*(it.qty||1);
+      }));
+      window.SALES_BY_NAME=Object.values(byName).sort((a,b)=>b.conv-a.conv);
+      const chip=document.getElementById('salesChip');
+      if(!chip){
+        const hdr=document.querySelector('.hdr-title');
+        if(hdr){const c=document.createElement('span');c.id='salesChip';c.style.cssText='margin-left:10px;font-size:10px;padding:3px 8px;border-radius:10px;background:var(--green);color:#fff;font-weight:700';c.textContent='Yampi LIVE · '+paid.length+' pedidos';hdr.appendChild(c);}
+      } else { chip.textContent='Yampi LIVE · '+paid.length+' pedidos'; }
+      try{if(typeof renderVendas==='function')renderVendas();}catch(_){}
+    }catch(e){console.warn('sales-sync falhou:',e.message);}
+  }
+  loadSales();
+  setInterval(loadSales,60000);
   setTimeout(populateSellerFilter,500);
   if(window.hideBootLoader)window.hideBootLoader();
 });

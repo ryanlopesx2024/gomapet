@@ -29,9 +29,9 @@ async function fetchYampi(since: string, until: string) {
     status: o.status?.data?.alias || o.status_alias || "",
     created: o.created_at,
     items: (o.items?.data || []).map((it: any) => ({
-      name: it.sku_title || it.title,
-      qty: it.quantity,
-      price: parseFloat(it.price || 0),
+      name: it.item_title || it.sku_title || it.title || it.name || `SKU ${it.sku_id || ""}`,
+      qty: it.quantity ?? it.qty ?? 1,
+      price: parseFloat(it.price || it.unit_price || 0),
     })),
   }));
   const total = orders.reduce((a: number, o: any) => a + o.total, 0);
