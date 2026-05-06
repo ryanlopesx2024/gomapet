@@ -1748,7 +1748,49 @@ function renderVendas(){
         </div>`).join('')}
     </div>`;
 
-  // Day of week heatmap
+  // ── Produto Principal vs Upsell ────────────────────────────────
+  const UPSELL_KEYS=['bafisco','avant','upsell','cross','kit','premium','combo'];
+  const isUp=n=>{const s=(n||'').toLowerCase();return UPSELL_KEYS.some(k=>s.includes(k));};
+  const camps=D.camps||[];
+  const upRev=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.rev||0),0);
+  const upConv=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.conv||0),0);
+  const mainRev=Math.max(totalRev-upRev,0);
+  const mainConv=Math.max((c.orders||0)-upConv,0);
+  const upPctOfMain=mainConv>0?Math.round(upConv/mainConv*100):0;
+  const elPU=document.getElementById('v-prod-vs-upsell');
+  if(elPU){
+    elPU.innerHTML=`
+      <div class="card card-p" style="border-top:3px solid var(--blue)">
+        <div class="kc-lbl">Produto Principal</div>
+        <div class="kc-val">${fmtBRL(mainRev)}</div>
+        <div class="kc-sub" style="color:var(--blue)">${fmtN(mainConv)} compras</div>
+      </div>
+      <div class="card card-p" style="border-top:3px solid var(--ora)">
+        <div class="kc-lbl">Upsell (Bafisco/Avant/Kits)</div>
+        <div class="kc-val">${fmtBRL(upRev)}</div>
+        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% do principal · ${fmtN(upConv)} vendas</div>
+      </div>`;
+  }
+
+  // ── Ranking de Vendas por Kit ──────────────────────────────────
+  const kits=camps.filter(x=>isUp(x.n))
+    .sort((a,b)=>(b.conv||0)-(a.conv||0))
+    .slice(0,8);
+  const kTb=document.getElementById('v-kits-tbody');
+  if(kTb){
+    if(!kits.length){
+      kTb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--g1);font-size:11px;padding:14px">Sem campanhas de kit identificadas no período.</td></tr>';
+    } else {
+      kTb.innerHTML=kits.map((k,i)=>`
+        <tr>
+          <td><span class="lbrank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+          <td style="font-weight:600">${k.n}</td>
+          <td class="mono">${fmtN(k.conv||0)}</td>
+          <td class="mono" style="font-weight:700;color:var(--green)">${fmtBRL(k.rev||0)}</td>
+          <td class="mono" style="color:var(--ora)">${(k.roas||0).toFixed(2)}×</td>
+        </tr>`).join('');
+    }
+  }
   const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const dowAcc=[0,0,0,0,0,0,0]; const dowCnt=[0,0,0,0,0,0,0];
   D.daily.forEach((r,i)=>{const d=(i+1)%7;dowAcc[d]+=(r._rev||((r.sp0+r.sp1)*roas));dowCnt[d]++;});
