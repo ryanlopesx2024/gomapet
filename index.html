@@ -2855,7 +2855,11 @@ function renderYampi(){
     if(kpis)kpis.innerHTML='<div class="card card-p" style="grid-column:1/-1;text-align:center;color:var(--ora)">⚠ Credenciais Yampi não configuradas no backend.</div>';
     return;
   }
-  const all=d.yampi.orders||[];
+  const all=(d.yampi.orders||[]).filter(o=>{
+    const dt=(o.created?.date||o.created||'').slice(0,10);
+    if(!dt)return true;
+    return dt>=d.since && dt<=d.until;
+  });
   const st=window.YMP.status||'paid';
   const filtered=st==='all'?all:all.filter(o=>{
     const s=(o.status||'').toLowerCase();
