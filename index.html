@@ -3054,6 +3054,43 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }
   await loadTeam(); await loadStock();
   setInterval(()=>{loadTeam();loadStock();},15000);
+
+  // ── Yampi/Payt sync (vendas reais) ──────────────────────────────
+  const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
+  const SUP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
+  async function loadSales(){
+    try{
+      const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?apikey=${SUP_KEY}`);
+      const d=await r.json();
+      if(!d||!d.ok)return;
+      window.SALES=d;
+      const orders=[...(d.yampi?.orders||[]),...(d.payt?.orders||[])];
+      const paid=orders.filter(o=>/paid|approved|aprovad|pago/i.test(o.status||''));
+      const totalPaid=paid.reduce((a,o)=>a+(o.total||0),0);
+      if(window.S&&S.comp&&paid.length){
+        S.comp.rev=totalPaid;
+        S.comp.orders=paid.length;
+        S.comp.avgTkt=totalPaid/paid.length;
+      }
+      // Ranking por nome de produto
+      const byName={};
+      paid.forEach(o=>(o.items||[]).forEach(it=>{
+        const n=(it.name||'Sem nome').trim();
+        if(!byName[n])byName[n]={n,conv:0,rev:0};
+        byName[n].conv+=(it.qty||1);
+        byName[n].rev+=(it.price||0)*(it.qty||1);
+      }));
+      window.SALES_BY_NAME=Object.values(byName).sort((a,b)=>b.conv-a.conv);
+      const chip=document.getElementById('salesChip');
+      if(!chip){
+        const hdr=document.querySelector('.hdr-title');
+        if(hdr){const c=document.createElement('span');c.id='salesChip';c.style.cssText='margin-left:10px;font-size:10px;padding:3px 8px;border-radius:10px;background:var(--green);color:#fff;font-weight:700';c.textContent='Yampi LIVE · '+paid.length+' pedidos';hdr.appendChild(c);}
+      } else { chip.textContent='Yampi LIVE · '+paid.length+' pedidos'; }
+      try{if(typeof renderVendas==='function')renderVendas();}catch(_){}
+    }catch(e){console.warn('sales-sync falhou:',e.message);}
+  }
+  loadSales();
+  setInterval(loadSales,60000);
   setTimeout(populateSellerFilter,500);
   if(window.hideBootLoader)window.hideBootLoader();
 });
