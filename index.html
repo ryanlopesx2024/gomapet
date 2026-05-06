@@ -853,7 +853,14 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
     <div class="page" id="pg-trafego">
       <!-- Account summary KPIs -->
       <div class="sec">
-        <div class="sec-title">Resumo da Conta — Abril 2025</div>
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Resumo da Conta — Tempo Real</span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:10px;font-weight:500;color:var(--g1);text-transform:none;letter-spacing:0">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(41,179,71,.7);animation:pulse 1.6s infinite"></span>
+            <span id="trafLastUpdate">Atualizando…</span>
+            <button onclick="if(window.META&&META.accountId)fetchMetaData(META.accountId).then(()=>{const ts=new Date().toLocaleTimeString('pt-BR');document.getElementById('trafLastUpdate').textContent='Atualizado '+ts;})" style="background:var(--gL);border:1px solid var(--g3);border-radius:6px;padding:3px 8px;color:var(--w);font-size:10px;cursor:pointer"><i class="fas fa-rotate"></i></button>
+          </span>
+        </div>
         <div class="g5" id="traf-kpis"></div>
       </div>
       <div class="sec" style="padding-top:0">
