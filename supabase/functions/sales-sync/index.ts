@@ -13,17 +13,26 @@ async function fetchYampi(since: string, until: string) {
   if (!YAMPI_ALIAS || !YAMPI_TOKEN || !YAMPI_SECRET) {
     return { ok: false, configured: false, orders: [], total: 0, count: 0 };
   }
-  const url = `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/orders?include=items&date_min=${since}&date_max=${until}&limit=200`;
-  const r = await fetch(url, {
-    headers: {
-      "User-Token": YAMPI_TOKEN,
-      "User-Secret-Key": YAMPI_SECRET,
-      "Content-Type": "application/json",
-    },
-  });
-  if (!r.ok) throw new Error(`Yampi ${r.status}: ${await r.text()}`);
-  const j = await r.json();
-  const orders = (j.data || []).map((o: any) => ({
+  const headers = {
+    "User-Token": YAMPI_TOKEN,
+    "User-Secret-Key": YAMPI_SECRET,
+    "Content-Type": "application/json",
+  };
+  const all: any[] = [];
+  let page = 1;
+  const maxPages = 20; // até 4000 pedidos por chamada
+  while (page <= maxPages) {
+    const url = `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/orders?include=items&date_min=${since}&date_max=${until}&limit=200&page=${page}`;
+    const r = await fetch(url, { headers });
+    if (!r.ok) throw new Error(`Yampi ${r.status}: ${await r.text()}`);
+    const j = await r.json();
+    const data = j.data || [];
+    all.push(...data);
+    const meta = j.meta?.pagination;
+    if (!meta || page >= (meta.total_pages || 1) || data.length === 0) break;
+    page++;
+  }
+  const orders = all.map((o: any) => ({
     id: o.id,
     total: parseFloat(o.value_total || 0),
     status: o.status?.data?.alias || o.status_alias || "",
