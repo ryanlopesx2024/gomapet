@@ -1,0 +1,85 @@
+// Yampi + Payt sales aggregator
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const YAMPI_ALIAS = Deno.env.get("YAMPI_ALIAS") ?? "";
+const YAMPI_TOKEN = Deno.env.get("YAMPI_USER_TOKEN") ?? "";
+const YAMPI_SECRET = Deno.env.get("YAMPI_SECRET_KEY") ?? "";
+const PAYT_KEY = Deno.env.get("PAYT_API_KEY") ?? "";
+
+async function fetchYampi(since: string, until: string) {
+  if (!YAMPI_ALIAS || !YAMPI_TOKEN || !YAMPI_SECRET) {
+    return { ok: false, configured: false, orders: [], total: 0, count: 0 };
+  }
+  const url = `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/orders?include=items&date_min=${since}&date_max=${until}&limit=200`;
+  const r = await fetch(url, {
+    headers: {
+      "User-Token": YAMPI_TOKEN,
+      "User-Secret-Key": YAMPI_SECRET,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!r.ok) throw new Error(`Yampi ${r.status}: ${await r.text()}`);
+  const j = await r.json();
+  const orders = (j.data || []).map((o: any) => ({
+    id: o.id,
+    total: parseFloat(o.value_total || 0),
+    status: o.status?.data?.alias || o.status_alias || "",
+    created: o.created_at,
+    items: (o.items?.data || []).map((it: any) => ({
+      name: it.sku_title || it.title,
+      qty: it.quantity,
+      price: parseFloat(it.price || 0),
+    })),
+  }));
+  const total = orders.reduce((a: number, o: any) => a + o.total, 0);
+  return { ok: true, configured: true, orders, total, count: orders.length };
+}
+
+async function fetchPayt(since: string, until: string) {
+  if (!PAYT_KEY) {
+    return { ok: false, configured: false, orders: [], total: 0, count: 0 };
+  }
+  // Endpoint placeholder — ajustar conforme docs Payt assim que credencial chegar
+  const url = `https://api.payt.com.br/v1/orders?from=${since}&to=${until}&limit=200`;
+  const r = await fetch(url, {
+    headers: { Authorization: `Bearer ${PAYT_KEY}`, "Content-Type": "application/json" },
+  });
+  if (!r.ok) throw new Error(`Payt ${r.status}: ${await r.text()}`);
+  const j = await r.json();
+  const orders = (j.data || j.orders || []).map((o: any) => ({
+    id: o.id,
+    total: parseFloat(o.amount || o.total || 0),
+    status: o.status,
+    created: o.created_at || o.date,
+  }));
+  const total = orders.reduce((a: number, o: any) => a + o.total, 0);
+  return { ok: true, configured: true, orders, total, count: orders.length };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const json = (b: any, s = 200) =>
+    new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  try {
+    const url = new URL(req.url);
+    const today = new Date().toISOString().slice(0, 10);
+    const d30 = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
+    const since = url.searchParams.get("since") || d30;
+    const until = url.searchParams.get("until") || today;
+    const src = url.searchParams.get("source"); // yampi | payt | (all)
+
+    const out: any = { ok: true, since, until };
+    if (!src || src === "yampi") out.yampi = await fetchYampi(since, until).catch(e => ({ ok: false, error: String(e) }));
+    if (!src || src === "payt") out.payt = await fetchPayt(since, until).catch(e => ({ ok: false, error: String(e) }));
+    out.combined = {
+      total: (out.yampi?.total || 0) + (out.payt?.total || 0),
+      count: (out.yampi?.count || 0) + (out.payt?.count || 0),
+    };
+    return json(out);
+  } catch (e) {
+    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 502);
+  }
+});
