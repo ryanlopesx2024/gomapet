@@ -2901,7 +2901,7 @@ function renderYampi(){
     </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--g1)">Sem itens.</td></tr>';
   }
   // Últimos pedidos
-  const sorted=[...filtered].sort((a,b)=>{
+  const sorted=[...dedup].sort((a,b)=>{
     const da=new Date(a.created?.date||a.created||0).getTime();
     const db=new Date(b.created?.date||b.created||0).getTime();
     return db-da;
