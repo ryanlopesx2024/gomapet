@@ -2846,6 +2846,11 @@ function renderAlertas(){
 
 /* ═══ YAMPI PAGE ═════════════════════════════════════════════ */
 window.YMP={data:null,loading:false,period:30,status:'paid'};
+function isPaidOrderStatus(status){
+  const s=(status||'').toString().toLowerCase().trim();
+  if(/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s))return false;
+  return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
+}
 async function loadYampiData(force){
   if(window.YMP.loading)return;
   window.YMP.loading=true;
@@ -2886,7 +2891,7 @@ function renderYampi(){
   const st=window.YMP.status||'paid';
   const filtered=st==='all'?all:all.filter(o=>{
     const s=(o.status||'').toLowerCase();
-    if(st==='paid')return /paid|approved|aprovad|pago/.test(s);
+    if(st==='paid')return isPaidOrderStatus(s);
     if(st==='waiting_payment')return /waiting|pending|aguard/.test(s);
     if(st==='canceled')return /cancel|refund|estorn/.test(s);
     return true;
@@ -2900,8 +2905,8 @@ function renderYampi(){
   const itemsCount=dedup.reduce((a,o)=>a+(o.items||[]).length,0);
   if(kpis){
     kpis.innerHTML=`
-      <div class="card card-p" style="border-top:3px solid var(--green)"><div class="kc-lbl">Faturamento</div><div class="kc-val">${fmtBRL(total)}</div><div class="kc-sub pos">${filtered.length} pedidos</div></div>
-      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(filtered.length)}</div><div class="kc-sub" style="color:var(--blue)">filtro: ${st}</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--green)"><div class="kc-lbl">Faturamento</div><div class="kc-val">${fmtBRL(total)}</div><div class="kc-sub pos">${dedup.length} pedidos</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(dedup.length)}</div><div class="kc-sub" style="color:var(--blue)">filtro: ${st}</div></div>
       <div class="card card-p" style="border-top:3px solid var(--ora)"><div class="kc-lbl">Ticket Médio</div><div class="kc-val">${fmtBRL(tkt)}</div><div class="kc-sub neu">por pedido</div></div>
       <div class="card card-p" style="border-top:3px solid var(--pur)"><div class="kc-lbl">Itens Vendidos</div><div class="kc-val">${fmtN(itemsCount)}</div><div class="kc-sub pur">unidades</div></div>`;
   }
@@ -3290,7 +3295,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
       if(!d||!d.ok)return;
       window.SALES=d;
       const orders=[...(d.yampi?.orders||[]),...(d.payt?.orders||[])];
-      const paid=orders.filter(o=>/paid|approved|aprovad|pago/i.test(o.status||''));
+      const paid=orders.filter(o=>isPaidOrderStatus(o.status));
       const totalPaid=paid.reduce((a,o)=>a+(o.total||0),0);
       if(window.S&&S.comp&&paid.length){
         S.comp.rev=totalPaid;

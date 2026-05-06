@@ -9,6 +9,20 @@ const YAMPI_TOKEN = Deno.env.get("YAMPI_USER_TOKEN") ?? "";
 const YAMPI_SECRET = Deno.env.get("YAMPI_SECRET_KEY") ?? "";
 const PAYT_KEY = Deno.env.get("PAYT_API_KEY") ?? "";
 
+function orderDate(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "object" && value !== null && "date" in value) {
+    return String((value as { date?: unknown }).date ?? "").slice(0, 10);
+  }
+  return String(value).slice(0, 10);
+}
+
+function isPaidStatus(status: unknown): boolean {
+  const s = String(status ?? "").toLowerCase().trim();
+  if (/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s)) return false;
+  return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
+}
+
 async function fetchYampi(since: string, until: string) {
   if (!YAMPI_ALIAS || !YAMPI_TOKEN || !YAMPI_SECRET) {
     return { ok: false, configured: false, orders: [], total: 0, count: 0 };
@@ -43,8 +57,11 @@ async function fetchYampi(since: string, until: string) {
       qty: it.quantity ?? it.qty ?? 1,
       price: parseFloat(it.price || it.unit_price || 0),
     })),
-  }));
-  const total = orders.reduce((a: number, o: any) => a + o.total, 0);
+  })).filter((o: any) => {
+    const dt = orderDate(o.created);
+    return !dt || (dt >= since && dt <= until);
+  });
+  const total = orders.filter((o: any) => isPaidStatus(o.status)).reduce((a: number, o: any) => a + o.total, 0);
   return { ok: true, configured: true, orders, total, count: orders.length };
 }
 
