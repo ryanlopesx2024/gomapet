@@ -1223,7 +1223,61 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
       </div>
     </div>
 
-  </div><!-- /content -->
+    <div class="page" id="pg-yampi">
+      <div class="sec">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--w);font-family:'Fredoka',sans-serif">🛒 Yampi · A Lojinha do Pet</div>
+            <div style="font-size:11px;color:var(--g1);margin-top:2px">Dados em tempo real direto da API Yampi (Dooki)</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="ympPeriod" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
+              <option value="7">Últimos 7 dias</option>
+              <option value="30" selected>Últimos 30 dias</option>
+              <option value="90">Últimos 90 dias</option>
+            </select>
+            <select id="ympStatus" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
+              <option value="paid">Apenas pagos</option>
+              <option value="all">Todos os status</option>
+              <option value="waiting_payment">Aguardando pagto</option>
+              <option value="canceled">Cancelados</option>
+            </select>
+            <button class="meta-btn" id="ympRefresh" style="width:auto;padding:6px 14px;font-size:12px"><i class="fas fa-sync"></i> Atualizar</button>
+          </div>
+        </div>
+        <div class="g4" id="ymp-kpis"></div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="g2">
+          <div>
+            <div class="sec-title">Faturamento Diário (Yampi)</div>
+            <div class="card card-p"><canvas id="cYmpDaily" height="180"></canvas></div>
+          </div>
+          <div>
+            <div class="sec-title">Distribuição por Status</div>
+            <div class="card card-p"><canvas id="cYmpStatus" height="180"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="sec-title">Ranking de Produtos Vendidos</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="t" style="width:100%">
+            <thead><tr><th>#</th><th>Produto</th><th>Qtd</th><th>Receita</th><th>Ticket Médio</th></tr></thead>
+            <tbody id="ymp-products"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="sec-title">Últimos Pedidos</div>
+        <div class="card" style="padding:0;overflow:hidden;max-height:520px;overflow-y:auto">
+          <table class="t" style="width:100%">
+            <thead><tr><th>ID</th><th>Data</th><th>Itens</th><th>Status</th><th>Total</th></tr></thead>
+            <tbody id="ymp-orders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
   <!-- META LIVE BANNER — inside .main, below content -->
   <div id="metaBanner">
