@@ -630,6 +630,25 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
       <div class="sec" style="padding-top:0">
         <div class="g4" id="v-kpi-cards"></div>
       </div>
+
+      <!-- Faturamento Principal vs Upsell + Ranking de Kits -->
+      <div class="sec" style="padding-top:0">
+        <div class="g2">
+          <div>
+            <div class="sec-title">Faturamento — Produto Principal vs Upsell</div>
+            <div class="g2" id="v-prod-vs-upsell"></div>
+          </div>
+          <div>
+            <div class="sec-title">Ranking de Vendas por Kit</div>
+            <div class="card" style="padding:0;overflow:hidden">
+              <table>
+                <thead><tr><th>#</th><th>Kit</th><th>Vendas</th><th>Receita</th><th>ROAS</th></tr></thead>
+                <tbody id="v-kits-tbody"><tr><td colspan="5" style="text-align:center;color:var(--g1);font-size:11px;padding:14px">Aguardando dados…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Revenue split + daily peak heatmap -->
       <div class="sec" style="padding-top:0">
         <div class="g2">
