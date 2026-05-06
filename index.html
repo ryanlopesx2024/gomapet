@@ -2969,11 +2969,26 @@ window.addEventListener('DOMContentLoaded',async()=>{
       }
     };
     await load();
-    // Auto-refresh a cada 60s — força bypass de cache
-    setInterval(()=>{
-      const u=`https://xfgfalglgfamavemedew.supabase.co/functions/v1/meta-ads?force=1&apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM&account_id=${encodeURIComponent(META.accountId)}`;
-      fetch(u).then(r=>r.json()).then(d=>{if(d.ok){META.lastData=d;applyMetaData(d);}}).catch(()=>{});
-    },60000);
+    // Auto-refresh a cada 60s — força bypass de cache (KPIs + funil em tempo real)
+    const autoRefresh=async()=>{
+      try{
+        const u=`https://xfgfalglgfamavemedew.supabase.co/functions/v1/meta-ads?force=1&apikey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM&account_id=${encodeURIComponent(META.accountId)}`;
+        const r=await fetch(u); const d=await r.json();
+        if(d&&d.ok){
+          META.lastData=d;
+          applyMetaData(d);
+          if(typeof applyFiltersToKPIs==='function') applyFiltersToKPIs();
+          const chip=document.getElementById('metaChip'); const dot=document.getElementById('metaDot');
+          if(chip)chip.className='meta-chip ok';
+          if(dot)dot.style.background='var(--green)';
+          const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+          const lu=document.getElementById('metaLastUpdate'); if(lu)lu.textContent='Atualizado '+ts;
+        }
+      }catch(e){console.warn('auto-refresh falhou:',e.message);}
+    };
+    setInterval(autoRefresh,60000);
+    // Atualização rápida adicional ao voltar pra aba
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoRefresh();});
   }
   await loadTeam(); await loadStock();
   setInterval(()=>{loadTeam();loadStock();},15000);
