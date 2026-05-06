@@ -2835,7 +2835,8 @@ async function loadYampiData(force){
     const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?source=yampi&since=${since}&until=${until}&apikey=${SUP_KEY}`);
     const d=await r.json();
     window.YMP.data=d;
-    if(document.querySelector('[data-pg="yampi"].on'))renderYampi();
+    console.log('[Yampi] loaded',d?.yampi?.count,'orders');
+    if(document.getElementById('ymp-kpis'))renderYampi();
   }catch(e){console.warn('yampi load fail',e.message);}
   finally{window.YMP.loading=false;}
 }
