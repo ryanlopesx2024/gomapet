@@ -2868,9 +2868,13 @@ function renderYampi(){
     if(st==='canceled')return /cancel|refund|estorn/.test(s);
     return true;
   });
-  const total=filtered.reduce((a,o)=>a+(o.total||0),0);
-  const tkt=filtered.length?total/filtered.length:0;
-  const itemsCount=filtered.reduce((a,o)=>a+(o.items||[]).reduce((s,it)=>s+(it.qty||1),0),0);
+  // dedupe por id (caso paginação retorne duplicados)
+  const seen=new Set();
+  const dedup=filtered.filter(o=>{if(seen.has(o.id))return false;seen.add(o.id);return true;});
+  const total=dedup.reduce((a,o)=>a+(o.total||0),0);
+  const tkt=dedup.length?total/dedup.length:0;
+  // Itens vendidos = nº de linhas de produto (não soma de quantidades)
+  const itemsCount=dedup.reduce((a,o)=>a+(o.items||[]).length,0);
   if(kpis){
     kpis.innerHTML=`
       <div class="card card-p" style="border-top:3px solid var(--green)"><div class="kc-lbl">Faturamento</div><div class="kc-val">${fmtBRL(total)}</div><div class="kc-sub pos">${filtered.length} pedidos</div></div>
@@ -2880,7 +2884,7 @@ function renderYampi(){
   }
   // Ranking produtos
   const byName={};
-  filtered.forEach(o=>(o.items||[]).forEach(it=>{
+  dedup.forEach(o=>(o.items||[]).forEach(it=>{
     const n=(it.name||'Sem nome').trim();
     if(!byName[n])byName[n]={n,qty:0,rev:0};
     byName[n].qty+=(it.qty||1);
@@ -2897,7 +2901,7 @@ function renderYampi(){
     </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--g1)">Sem itens.</td></tr>';
   }
   // Últimos pedidos
-  const sorted=[...filtered].sort((a,b)=>{
+  const sorted=[...dedup].sort((a,b)=>{
     const da=new Date(a.created?.date||a.created||0).getTime();
     const db=new Date(b.created?.date||b.created||0).getTime();
     return db-da;
@@ -2915,7 +2919,7 @@ function renderYampi(){
   // Charts
   if(typeof Chart!=='undefined'){
     const byDay={};
-    filtered.forEach(o=>{
+    dedup.forEach(o=>{
       const dt=o.created?.date||o.created||'';
       const day=(dt+'').slice(0,10);
       if(!day)return;
