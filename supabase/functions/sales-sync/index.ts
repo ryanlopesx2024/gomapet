@@ -8,6 +8,8 @@ const YAMPI_ALIAS = Deno.env.get("YAMPI_ALIAS") ?? "";
 const YAMPI_TOKEN = Deno.env.get("YAMPI_USER_TOKEN") ?? "";
 const YAMPI_SECRET = Deno.env.get("YAMPI_SECRET_KEY") ?? "";
 const PAYT_KEY = Deno.env.get("PAYT_API_KEY") ?? "";
+const YAMPI_CACHE = new Map<string, { expires: number; data: any }>();
+const YAMPI_INFLIGHT = new Map<string, Promise<any>>();
 
 function orderDate(value: unknown): string {
   if (!value) return "";
@@ -23,29 +25,51 @@ function isPaidStatus(status: unknown): boolean {
   return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
 }
 
-async function fetchYampi(since: string, until: string) {
+async function fetchYampi(since: string, until: string, summaryOnly = false) {
   if (!YAMPI_ALIAS || !YAMPI_TOKEN || !YAMPI_SECRET) {
     return { ok: false, configured: false, orders: [], total: 0, count: 0 };
   }
+  const cacheKey = `yampi:${since}:${until}:${summaryOnly ? "summary" : "full"}`;
+  const cached = YAMPI_CACHE.get(cacheKey);
+  if (cached && cached.expires > Date.now()) return { ...cached.data, cached: true };
+  const inflight = YAMPI_INFLIGHT.get(cacheKey);
+  if (inflight) return await inflight;
+
+  const request = (async () => {
   const headers = {
     "User-Token": YAMPI_TOKEN,
     "User-Secret-Key": YAMPI_SECRET,
     "Content-Type": "application/json",
   };
   const all: any[] = [];
-  let page = 1;
-  const limit = 50; // Yampi maxes at 50 per page
-  const maxPages = 80; // até 4000 pedidos por chamada
-  while (page <= maxPages) {
-    const url = `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/orders?include=items&date_min=${since}&date_max=${until}&limit=${limit}&page=${page}`;
+  const limit = 100; // máximo permitido pela Yampi
+  const maxPages = 40; // até 4000 pedidos por chamada
+  const concurrency = 6;
+  const fetchPage = async (page: number) => {
+    const params = new URLSearchParams({
+      include: "items,status",
+      date: `created_at:${since}|${until}`,
+      limit: String(limit),
+      page: String(page),
+    });
+    const url = `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/orders?${params.toString()}`;
     const r = await fetch(url, { headers });
     if (!r.ok) throw new Error(`Yampi ${r.status}: ${await r.text()}`);
     const j = await r.json();
-    const data = j.data || [];
-    all.push(...data);
-    // Continue while page is full; stop when last page returns fewer than `limit`
-    if (data.length < limit) break;
-    page++;
+    return j.data || [];
+  };
+
+  let page = 1;
+  while (page <= maxPages) {
+    const pages = Array.from({ length: Math.min(concurrency, maxPages - page + 1) }, (_, i) => page + i);
+    const batch = await Promise.all(pages.map(fetchPage));
+    let stop = false;
+    for (const data of batch) {
+      all.push(...data);
+      if (data.length < limit) stop = true;
+    }
+    if (stop) break;
+    page += pages.length;
   }
   const orders = all.map((o: any) => ({
     id: o.id,
@@ -61,8 +85,25 @@ async function fetchYampi(since: string, until: string) {
     const dt = orderDate(o.created);
     return !dt || (dt >= since && dt <= until);
   });
-  const total = orders.filter((o: any) => isPaidStatus(o.status)).reduce((a: number, o: any) => a + o.total, 0);
-  return { ok: true, configured: true, orders, total, count: orders.length };
+  const paidOrders = orders.filter((o: any) => isPaidStatus(o.status));
+  const total = paidOrders.reduce((a: number, o: any) => a + o.total, 0);
+  const byName: Record<string, { n: string; conv: number; rev: number }> = {};
+  paidOrders.forEach((o: any) => (o.items || []).forEach((it: any) => {
+    const n = String(it.name || "Sem nome").trim();
+    if (!byName[n]) byName[n] = { n, conv: 0, rev: 0 };
+    byName[n].conv += it.qty || 1;
+    byName[n].rev += (it.price || 0) * (it.qty || 1);
+  }));
+  const data = { ok: true, configured: true, orders: summaryOnly ? [] : orders, total, count: orders.length, paidCount: paidOrders.length, summary: { byName: Object.values(byName).sort((a, b) => b.conv - a.conv) }, cached: false };
+  YAMPI_CACHE.set(cacheKey, { expires: Date.now() + 55_000, data });
+  return data;
+  })();
+  YAMPI_INFLIGHT.set(cacheKey, request);
+  try {
+    return await request;
+  } finally {
+    YAMPI_INFLIGHT.delete(cacheKey);
+  }
 }
 
 async function fetchPayt(since: string, until: string) {
@@ -97,9 +138,10 @@ Deno.serve(async (req) => {
     const since = url.searchParams.get("since") || d30;
     const until = url.searchParams.get("until") || today;
     const src = url.searchParams.get("source"); // yampi | payt | (all)
+    const summaryOnly = url.searchParams.get("summary") === "1";
 
     const out: any = { ok: true, since, until };
-    if (!src || src === "yampi") out.yampi = await fetchYampi(since, until).catch(e => ({ ok: false, error: String(e) }));
+    if (!src || src === "yampi") out.yampi = await fetchYampi(since, until, summaryOnly).catch(e => ({ ok: false, error: String(e) }));
     if (!src || src === "payt") out.payt = await fetchPayt(since, until).catch(e => ({ ok: false, error: String(e) }));
     out.combined = {
       total: (out.yampi?.total || 0) + (out.payt?.total || 0),
