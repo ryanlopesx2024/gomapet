@@ -853,7 +853,14 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
     <div class="page" id="pg-trafego">
       <!-- Account summary KPIs -->
       <div class="sec">
-        <div class="sec-title">Resumo da Conta — Abril 2025</div>
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Resumo da Conta — Tempo Real</span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:10px;font-weight:500;color:var(--g1);text-transform:none;letter-spacing:0">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(41,179,71,.7);animation:pulse 1.6s infinite"></span>
+            <span id="trafLastUpdate">Atualizando…</span>
+            <button onclick="if(window.META&&META.accountId)fetchMetaData(META.accountId).then(()=>{const ts=new Date().toLocaleTimeString('pt-BR');document.getElementById('trafLastUpdate').textContent='Atualizado '+ts;})" style="background:var(--gL);border:1px solid var(--g3);border-radius:6px;padding:3px 8px;color:var(--w);font-size:10px;cursor:pointer"><i class="fas fa-rotate"></i></button>
+          </span>
+        </div>
         <div class="g5" id="traf-kpis"></div>
       </div>
       <div class="sec" style="padding-top:0">
@@ -1707,7 +1714,8 @@ function renderVendas(){
   const recRev=D.repurchase.rev;
 
   // ── Meta do Mês ────────────────────────────────────────────────
-  const metaGoal=Math.round(totalRev*1.25/1000)*1000;
+  const savedGoal=parseFloat(localStorage.getItem('shop_month_goal')||'0');
+  const metaGoal=savedGoal>0?savedGoal:Math.round(totalRev*1.25/1000)*1000;
   const pct=Math.min(100,Math.round(totalRev/metaGoal*100));
   const gap=metaGoal-totalRev;
   const elR=document.getElementById('v-realizado');
@@ -1717,7 +1725,20 @@ function renderVendas(){
   const elGap=document.getElementById('v-meta-gap');
   const elProj=document.getElementById('v-meta-projs');
   if(elR)elR.textContent=fmtK(totalRev);
-  if(elM)elM.textContent=fmtK(metaGoal);
+  if(elM){
+    elM.innerHTML=fmtK(metaGoal)+' <i class="fas fa-pen" style="font-size:10px;color:var(--g1);margin-left:4px;cursor:pointer" title="Editar meta"></i>';
+    elM.style.cursor='pointer';
+    elM.title='Clique para editar a meta do mês';
+    elM.onclick=()=>{
+      const cur=savedGoal>0?savedGoal:metaGoal;
+      const v=prompt('Meta de faturamento do mês (R$):',String(cur));
+      if(v===null)return;
+      const n=parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',','.'))||0;
+      if(n<=0){localStorage.removeItem('shop_month_goal');}
+      else{localStorage.setItem('shop_month_goal',String(n));}
+      renderVendas();
+    };
+  }
   if(elBar)elBar.style.width=pct+'%';
   if(elPct)elPct.textContent=pct+'% atingido';
   if(elGap)elGap.textContent=gap>0?'Faltam '+fmtK(gap):'Meta atingida!';
@@ -1808,15 +1829,17 @@ function renderVendas(){
         </div>`).join('')}
     </div>`;
 
-  // ── Produto Principal vs Upsell ────────────────────────────────
+  // ── Produto Principal (Gomapet) vs Upsell ──────────────────────
+  const MAIN_KEYS=['gomapet','escova','goma pet'];
   const UPSELL_KEYS=['bafisco','avant','upsell','cross','kit','premium','combo','order bump','bump'];
-  const isUp=n=>{const s=(n||'').toLowerCase();return UPSELL_KEYS.some(k=>s.includes(k));};
+  const isMain=n=>{const s=(n||'').toLowerCase();return MAIN_KEYS.some(k=>s.includes(k));};
+  const isUp=n=>{const s=(n||'').toLowerCase();return !isMain(n)&&UPSELL_KEYS.some(k=>s.includes(k));};
   let upRev=0, upConv=0, mainRev=0, mainConv=0;
   const salesByName=window.SALES_BY_NAME||[];
   if(salesByName.length){
     salesByName.forEach(p=>{
-      if(isUp(p.n)){upRev+=p.rev;upConv+=p.conv;}
-      else{mainRev+=p.rev;mainConv+=p.conv;}
+      if(isMain(p.n)){mainRev+=p.rev;mainConv+=p.conv;}
+      else if(isUp(p.n)){upRev+=p.rev;upConv+=p.conv;}
     });
   } else {
     const camps=D.camps||[];
@@ -1830,21 +1853,21 @@ function renderVendas(){
   if(elPU){
     elPU.innerHTML=`
       <div class="card card-p" style="border-top:3px solid var(--blue)">
-        <div class="kc-lbl">Produto Principal</div>
+        <div class="kc-lbl">Produto Principal — Gomapet</div>
         <div class="kc-val">${fmtBRL(mainRev)}</div>
         <div class="kc-sub" style="color:var(--blue)">${fmtN(mainConv)} compras</div>
       </div>
       <div class="card card-p" style="border-top:3px solid var(--ora)">
-        <div class="kc-lbl">Upsell (Bafisco/Avant/Kits)</div>
+        <div class="kc-lbl">Faturamento Upsell</div>
         <div class="kc-val">${fmtBRL(upRev)}</div>
-        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% do principal · ${fmtN(upConv)} vendas</div>
+        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% de upsell sobre principal · ${fmtN(upConv)} vendas</div>
       </div>`;
   }
 
-  // ── Ranking de Vendas por Kit ──────────────────────────────────
+  // ── Ranking de Vendas por Kit (apenas upsell/kits) ─────────────
   let kits;
   if(salesByName.length){
-    kits=salesByName.slice(0,8).map(p=>({n:p.n,conv:p.conv,rev:p.rev,roas:0}));
+    kits=salesByName.filter(p=>isUp(p.n)).slice(0,8).map(p=>({n:p.n,conv:p.conv,rev:p.rev,roas:0}));
   } else {
     const camps=D.camps||[];
     kits=camps.filter(x=>isUp(x.n)).sort((a,b)=>(b.conv||0)-(a.conv||0)).slice(0,8);
@@ -3246,6 +3269,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
           if(dot)dot.style.background='var(--green)';
           const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
           const lu=document.getElementById('metaLastUpdate'); if(lu)lu.textContent='Atualizado '+ts;
+          const lu2=document.getElementById('trafLastUpdate'); if(lu2)lu2.textContent='Atualizado '+ts;
         }
       }catch(e){console.warn('auto-refresh falhou:',e.message);}
     };
