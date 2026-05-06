@@ -2919,7 +2919,7 @@ function renderYampi(){
   // Charts
   if(typeof Chart!=='undefined'){
     const byDay={};
-    filtered.forEach(o=>{
+    dedup.forEach(o=>{
       const dt=o.created?.date||o.created||'';
       const day=(dt+'').slice(0,10);
       if(!day)return;
