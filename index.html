@@ -630,6 +630,25 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
       <div class="sec" style="padding-top:0">
         <div class="g4" id="v-kpi-cards"></div>
       </div>
+
+      <!-- Faturamento Principal vs Upsell + Ranking de Kits -->
+      <div class="sec" style="padding-top:0">
+        <div class="g2">
+          <div>
+            <div class="sec-title">Faturamento — Produto Principal vs Upsell</div>
+            <div class="g2" id="v-prod-vs-upsell"></div>
+          </div>
+          <div>
+            <div class="sec-title">Ranking de Vendas por Kit</div>
+            <div class="card" style="padding:0;overflow:hidden">
+              <table>
+                <thead><tr><th>#</th><th>Kit</th><th>Vendas</th><th>Receita</th><th>ROAS</th></tr></thead>
+                <tbody id="v-kits-tbody"><tr><td colspan="5" style="text-align:center;color:var(--g1);font-size:11px;padding:14px">Aguardando dados…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Revenue split + daily peak heatmap -->
       <div class="sec" style="padding-top:0">
         <div class="g2">
@@ -1729,7 +1748,49 @@ function renderVendas(){
         </div>`).join('')}
     </div>`;
 
-  // Day of week heatmap
+  // ── Produto Principal vs Upsell ────────────────────────────────
+  const UPSELL_KEYS=['bafisco','avant','upsell','cross','kit','premium','combo'];
+  const isUp=n=>{const s=(n||'').toLowerCase();return UPSELL_KEYS.some(k=>s.includes(k));};
+  const camps=D.camps||[];
+  const upRev=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.rev||0),0);
+  const upConv=camps.filter(x=>isUp(x.n)).reduce((a,c)=>a+(c.conv||0),0);
+  const mainRev=Math.max(totalRev-upRev,0);
+  const mainConv=Math.max((c.orders||0)-upConv,0);
+  const upPctOfMain=mainConv>0?Math.round(upConv/mainConv*100):0;
+  const elPU=document.getElementById('v-prod-vs-upsell');
+  if(elPU){
+    elPU.innerHTML=`
+      <div class="card card-p" style="border-top:3px solid var(--blue)">
+        <div class="kc-lbl">Produto Principal</div>
+        <div class="kc-val">${fmtBRL(mainRev)}</div>
+        <div class="kc-sub" style="color:var(--blue)">${fmtN(mainConv)} compras</div>
+      </div>
+      <div class="card card-p" style="border-top:3px solid var(--ora)">
+        <div class="kc-lbl">Upsell (Bafisco/Avant/Kits)</div>
+        <div class="kc-val">${fmtBRL(upRev)}</div>
+        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% do principal · ${fmtN(upConv)} vendas</div>
+      </div>`;
+  }
+
+  // ── Ranking de Vendas por Kit ──────────────────────────────────
+  const kits=camps.filter(x=>isUp(x.n))
+    .sort((a,b)=>(b.conv||0)-(a.conv||0))
+    .slice(0,8);
+  const kTb=document.getElementById('v-kits-tbody');
+  if(kTb){
+    if(!kits.length){
+      kTb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--g1);font-size:11px;padding:14px">Sem campanhas de kit identificadas no período.</td></tr>';
+    } else {
+      kTb.innerHTML=kits.map((k,i)=>`
+        <tr>
+          <td><span class="lbrank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+          <td style="font-weight:600">${k.n}</td>
+          <td class="mono">${fmtN(k.conv||0)}</td>
+          <td class="mono" style="font-weight:700;color:var(--green)">${fmtBRL(k.rev||0)}</td>
+          <td class="mono" style="color:var(--ora)">${(k.roas||0).toFixed(2)}×</td>
+        </tr>`).join('');
+    }
+  }
   const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const dowAcc=[0,0,0,0,0,0,0]; const dowCnt=[0,0,0,0,0,0,0];
   D.daily.forEach((r,i)=>{const d=(i+1)%7;dowAcc[d]+=(r._rev||((r.sp0+r.sp1)*roas));dowCnt[d]++;});
@@ -2371,7 +2432,7 @@ function renderTime(){
       <td class="mono">${fmtN(Math.round(p.s*p.c/100))}</td>
       <td><span class="mono" style="font-size:11px;color:${p.c<goal?'var(--red)':'var(--green)'}">${p.c}%</span></td>
       <td class="mono" style="font-weight:700;color:${p.col}">${fmtBRL(p.r)}</td>
-      <td class="mono" style="font-size:10px;color:var(--g1)">${p.goal>0?fmtBRL(p.goal):'—'}</td>
+      <td class="mono" style="font-size:10px;color:var(--g1);cursor:pointer" onclick="editGoal('${p.id}')" title="Clique para editar a meta">${p.goal>0?fmtBRL(p.goal):'—'} <i class="fas fa-pen" style="font-size:8px;color:var(--cream);margin-left:4px"></i></td>
       <td class="mono" style="font-weight:700;color:${goalCol};font-size:10px">${goalPct==null?'—':goalPct.toFixed(0)+'%'}</td>
       <td style="font-size:10px;line-height:1.4">
         ${p.bm?`<div style="color:var(--w)">${p.bm}</div>`:''}
@@ -3305,6 +3366,17 @@ function openTeamModal(id){
 }
 function closeTeamModal(){document.getElementById('teamOverlay').style.display='none';}
 function editTeam(id){openTeamModal(id);}
+async function editGoal(id){
+  const p=D.team.find(x=>x.id===id); if(!p)return;
+  const cur=p.goal||0;
+  const v=prompt(`Meta de faturamento mensal para ${p.n} (R$):`, cur);
+  if(v===null)return;
+  const goal=parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(',','.'))||0;
+  try{
+    await sbReq(`sales_team?id=eq.${id}`,'PATCH',{goal});
+    await loadTeam();
+  }catch(e){alert('Erro ao salvar meta: '+e.message);}
+}
 async function deleteTeam(id){
   if(!confirm('Excluir este vendedor?'))return;
   try{await sbReq(`sales_team?id=eq.${id}`,'DELETE'); await loadTeam();}catch(e){alert('Erro: '+e.message);}
