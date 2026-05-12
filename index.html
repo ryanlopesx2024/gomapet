@@ -2832,7 +2832,7 @@ function renderAlertas(){
 }
 
 /* ═══ YAMPI PAGE ═════════════════════════════════════════════ */
-window.YMP={data:null,loading:false,period:30,status:'paid'};
+window.YMP={data:null,loading:false,period:30,status:'paid',brand:'all',channel:'all'};
 function isPaidOrderStatus(status){
   const s=(status||'').toString().toLowerCase().trim();
   if(/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s))return false;
