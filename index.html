@@ -2096,10 +2096,15 @@ function renderTrafego(){
     const cpaO=c.cpa||Math.round(inv/(orders||1));
     const ctrO=D.ctr||(D.camps.reduce((a,cp)=>a+cp.ctr,0)/Math.max(D.camps.length,1));
     const roasSub=roasO>=4?'pos':roasO>=3?'warn':'neg';
+    const sym=window.CUR_SYM||'R$';
+    const fx=window.USD_BRL||0;
+    const invBRL=(sym==='$'&&fx)?inv*fx:(sym==='R$'?inv:0);
+    const fxLine=fx?`<div class="kc-sub" style="color:var(--g1);font-size:9px">USD 1 = R$ ${fx.toFixed(2)}</div>`:'';
+    const invSub=(sym==='$'&&fx)?`<div class="kc-sub" style="color:var(--green);font-weight:700;font-size:10px">≈ R$ ${new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(invBRL)}</div>${fxLine}`:fxLine;
     trafKpis.innerHTML=`
       <div class="card card-p" style="border-left:3px solid var(--green)">
         <div class="kc-lbl">Invest. Total</div><div class="kc-val">${fmtK(inv)}</div>
-        <div class="kc-sub neu">${D.camps.length} campanhas</div></div>
+        <div class="kc-sub neu">${D.camps.length} campanhas</div>${invSub}</div>
       <div class="card card-p" style="border-left:3px solid var(--blue)">
         <div class="kc-lbl">Receita Total</div><div class="kc-val">${fmtK(rev)}</div>
         <div class="kc-sub pos">período filtrado</div></div>
@@ -2107,12 +2112,36 @@ function renderTrafego(){
         <div class="kc-lbl">ROAS Geral</div><div class="kc-val">${roasO.toFixed(2)}×</div>
         <div class="kc-sub ${roasSub}">${roasO>=4?'saudável':roasO>=3?'atenção':'crítico'}</div></div>
       <div class="card card-p" style="border-left:3px solid var(--red)">
-        <div class="kc-lbl">CPA Médio</div><div class="kc-val">$${cpaO}</div>
+        <div class="kc-lbl">CPA Médio</div><div class="kc-val">${sym}${cpaO}</div>
         <div class="kc-sub neu">${orders?fmtN(orders):'—'} conversões</div></div>
       <div class="card card-p" style="border-left:3px solid var(--pur)">
         <div class="kc-lbl">CTR Médio</div><div class="kc-val">${ctrO.toFixed(2)}%</div>
         <div class="kc-sub neu">${D.impressions?fmtN(D.impressions)+' impr.':'todas campanhas'}</div></div>`;
   }
+
+  // Banner de alertas (CPA alto)
+  const alertsArr=(window.META&&META.lastData&&META.lastData.alerts)||[];
+  let alertBanner=document.getElementById('cpa-alert-banner');
+  if(!alertBanner){
+    const sec=document.querySelector('#pg-trafego .sec');
+    if(sec){
+      alertBanner=document.createElement('div');
+      alertBanner.id='cpa-alert-banner';
+      alertBanner.style.cssText='margin-top:10px';
+      sec.appendChild(alertBanner);
+    }
+  }
+  if(alertBanner){
+    if(alertsArr.length){
+      const sym=window.CUR_SYM||'R$';
+      alertBanner.innerHTML=`<div class="card card-p" style="border-left:3px solid var(--red);background:rgba(232,68,85,.08)">
+        <div style="font-weight:700;color:var(--red);font-size:12px;margin-bottom:6px"><i class="fas fa-triangle-exclamation"></i> ${alertsArr.length} campanha(s) com CPA alto</div>
+        <div style="font-size:11px;color:var(--w);display:flex;gap:14px;flex-wrap:wrap">
+          ${alertsArr.map(a=>`<span><b>${a.n}</b> · CPA ${sym}${a.cpa} · ROAS ${a.roas}×</span>`).join('')}
+        </div></div>`;
+    } else { alertBanner.innerHTML=''; }
+  }
+
 
   // Campaign cards
   document.getElementById('camp-cards').innerHTML=D.camps.map((camp,i)=>{
