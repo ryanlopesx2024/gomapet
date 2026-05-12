@@ -91,7 +91,8 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
   }
   const orders = all.map((o: any) => {
     const items = (o.items?.data || []).map((it: any) => {
-      const name = it.item_title || it.sku_title || it.title || it.name || `SKU ${it.sku_id || ""}`;
+      const prodName = it.sku?.data?.product?.data?.name || it.sku?.data?.title;
+      const name = prodName || it.item_title || it.sku_title || it.title || it.name || `SKU ${it.sku_id || ""}`;
       return {
         name,
         qty: it.quantity ?? it.qty ?? 1,
