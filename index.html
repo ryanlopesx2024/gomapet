@@ -867,26 +867,14 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         <div class="sec-title">Campanhas Ativas</div>
         <div class="g5" id="camp-cards"></div>
       </div>
+      <!-- Criativos (ads) -->
       <div class="sec" style="padding-top:0">
-        <div class="g2">
-          <div>
-            <div class="sec-title">Invest. vs Receita — Bolha = CPA</div>
-            <div class="card card-p" style="position:relative">
-              <div class="cw" style="height:210px"><canvas id="cScatter"></canvas></div>
-            </div>
-          </div>
-          <div>
-            <div class="sec-title">Radar de Performance por Campanha</div>
-            <div class="card card-p">
-              <div class="cw" style="height:210px"><canvas id="cRadar"></canvas></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="sec" style="padding-top:0">
-        <div class="sec-title">CTR × CPA por Campanha</div>
-        <div class="card card-p">
-          <div class="cw" style="height:140px"><canvas id="cCtrCpa"></canvas></div>
+        <div class="sec-title">Criativos · Top 15 por Receita</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="t" style="width:100%">
+            <thead><tr><th>#</th><th>Criativo</th><th>Campanha</th><th>Inv.</th><th>Receita</th><th>ROAS</th><th>CPA</th><th>CTR</th><th>Conv.</th><th>Link</th></tr></thead>
+            <tbody id="ads-tbody"><tr><td colspan="10" style="text-align:center;padding:14px;color:var(--g1)">Aguardando dados…</td></tr></tbody>
+          </table>
         </div>
       </div>
 
