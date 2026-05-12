@@ -1846,7 +1846,18 @@ function renderVendas(){
     mainRev=Math.max(totalRev-upRev,0);
     mainConv=Math.max((c.orders||0)-upConv,0);
   }
+  // OrderBump (Frete Expresso) vindo do backend
+  const ob=window.SALES?.yampi?.summary?.orderBump||{rev:0,conv:0};
+  // Marca: prefere dado do backend se houver
+  const bb=window.SALES?.yampi?.summary?.byBrand;
+  if(bb){
+    mainRev=bb.gomapet?.rev||mainRev;
+    mainConv=bb.gomapet?.conv||mainConv;
+    upRev=bb.bafisco?.rev||upRev;
+    upConv=bb.bafisco?.conv||upConv;
+  }
   const upPctOfMain=mainConv>0?Math.round(upConv/mainConv*100):0;
+  const obPctOfMain=mainConv>0?Math.round(ob.conv/mainConv*100):0;
   const elPU=document.getElementById('v-prod-vs-upsell');
   if(elPU){
     elPU.innerHTML=`
@@ -1856,9 +1867,14 @@ function renderVendas(){
         <div class="kc-sub" style="color:var(--blue)">${fmtN(mainConv)} compras</div>
       </div>
       <div class="card card-p" style="border-top:3px solid var(--ora)">
-        <div class="kc-lbl">Faturamento Upsell</div>
+        <div class="kc-lbl">Faturamento Upsell — Bafisco</div>
         <div class="kc-val">${fmtBRL(upRev)}</div>
-        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% de upsell sobre principal · ${fmtN(upConv)} vendas</div>
+        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% sobre principal · ${fmtN(upConv)} vendas</div>
+      </div>
+      <div class="card card-p" style="border-top:3px solid var(--green)">
+        <div class="kc-lbl">OrderBump — Frete Expresso</div>
+        <div class="kc-val">${fmtBRL(ob.rev||0)}</div>
+        <div class="kc-sub" style="color:var(--green);font-weight:700">${obPctOfMain}% sobre principal · ${fmtN(ob.conv||0)} adesões</div>
       </div>`;
   }
 
