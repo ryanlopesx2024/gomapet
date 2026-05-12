@@ -221,6 +221,8 @@ async function buildPayload(accountId: string) {
       recontact_pool: recontactPool, total_msgs: Math.floor(msgConn), avg_pur_day: avgPurDay,
     },
     campaigns: campaigns.slice(0,10),
+    ads,
+    alerts,
     segments, daily, whatsapp_funnel,
     fetched_at: Math.floor(Date.now()/1000),
   };
