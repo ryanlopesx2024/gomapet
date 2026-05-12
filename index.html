@@ -2147,9 +2147,10 @@ function renderTrafego(){
   document.getElementById('camp-cards').innerHTML=D.camps.map((camp,i)=>{
     const cls=camp.roas>=4.5?'rb-hi':camp.roas>=3.5?'rb-mid':'rb-lo';
     const col=campColors[i];
-    return`<div class="camp-card" style="border-top:3px solid ${col}">
+    const alertBadge=camp.alert?`<span style="display:inline-block;margin-top:4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px"><i class="fas fa-triangle-exclamation"></i> CPA alto</span>`:'';
+    return`<div class="camp-card" style="border-top:3px solid ${col};${camp.alert?'box-shadow:0 0 0 1px var(--red) inset':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div class="camp-name" style="color:${col}">${camp.n}</div>
+        <div class="camp-name" style="color:${col}">${camp.n}${alertBadge}</div>
         <span class="rb ${cls}">${camp.roas.toFixed(1)}×</span>
       </div>
       <div class="camp-metric"><span class="camp-m-lbl">Invest.</span><span class="camp-m-val">${fmtBRL(camp.inv)}</span></div>
@@ -2157,6 +2158,33 @@ function renderTrafego(){
       <div class="camp-metric"><span class="camp-m-lbl">CPA</span><span class="camp-m-val">${window.CUR_SYM||'R$'}${camp.cpa}</span></div>
       <div class="camp-metric"><span class="camp-m-lbl">CTR</span><span class="camp-m-val">${camp.ctr}%</span></div>
     </div>`;}).join('');
+
+  // Render Criativos (ads)
+  const adsTb=document.getElementById('ads-tbody');
+  const adsList=(window.META&&META.lastData&&META.lastData.ads)||[];
+  if(adsTb){
+    if(adsList.length){
+      const sym=window.CUR_SYM||'R$';
+      adsTb.innerHTML=adsList.map((a,i)=>{
+        const linkBtn=a.link?`<a href="${a.link}" target="_blank" style="color:var(--blue);font-size:11px"><i class="fas fa-up-right-from-square"></i></a>`:'—';
+        const alertTag=a.alert?` <span style="background:var(--red);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:5px;margin-left:4px">CPA↑</span>`:'';
+        return `<tr>
+          <td><span class="lbrank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+          <td style="font-weight:600;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.n}${alertTag}</td>
+          <td style="font-size:10px;color:var(--g1)">${a.camp||'—'}</td>
+          <td class="mono">${sym}${fmtN(Math.round(a.inv))}</td>
+          <td class="mono" style="font-weight:700;color:var(--green)">${sym}${fmtN(Math.round(a.rev))}</td>
+          <td class="mono" style="color:var(--ora)">${a.roas}×</td>
+          <td class="mono">${sym}${a.cpa}</td>
+          <td class="mono">${a.ctr}%</td>
+          <td class="mono">${a.conv}</td>
+          <td>${linkBtn}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      adsTb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--g1)">Sem dados de criativos.</td></tr>';
+    }
+  }
 
   if(typeof Chart==='undefined')return;
 
