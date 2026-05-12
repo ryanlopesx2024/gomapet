@@ -3220,6 +3220,16 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{renderVendas();}catch(e){console.error('Erro ao renderizar vendas:',e);}
   try{renderAlertas();}catch(e){console.error('Erro ao renderizar alertas:',e);}
 
+  // USD → BRL (cotação do dia, sem auth)
+  (async()=>{
+    try{
+      const r=await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+      const j=await r.json();
+      const v=parseFloat(j?.USDBRL?.bid||0);
+      if(v>0){window.USD_BRL=v;}
+    }catch(_e){}
+  })();
+
   if(META.accountId){
     const load=async()=>{
       try{
