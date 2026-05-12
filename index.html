@@ -2883,17 +2883,29 @@ function renderYampi(){
     if(st==='canceled')return /cancel|refund|estorn/.test(s);
     return true;
   });
-  // dedupe por id (caso paginação retorne duplicados)
+  // dedupe por id
   const seen=new Set();
-  const dedup=filtered.filter(o=>{if(seen.has(o.id))return false;seen.add(o.id);return true;});
+  let dedup=filtered.filter(o=>{if(seen.has(o.id))return false;seen.add(o.id);return true;});
+  // Filtros marca + canal (atuam por item; pedido entra se ao menos um item bater)
+  const brand=window.YMP.brand||'all';
+  const channel=window.YMP.channel||'all';
+  const matchItem=(it)=>(brand==='all'||it.brand===brand)&&(channel==='all'||it.channel===channel);
+  if(brand!=='all'||channel!=='all'){
+    dedup=dedup.map(o=>{
+      const items=(o.items||[]).filter(matchItem);
+      if(!items.length)return null;
+      const total=items.reduce((a,it)=>a+(it.price||0)*(it.qty||1),0);
+      return {...o,items,total};
+    }).filter(Boolean);
+  }
   const total=dedup.reduce((a,o)=>a+(o.total||0),0);
   const tkt=dedup.length?total/dedup.length:0;
-  // Itens vendidos = nº de linhas de produto (não soma de quantidades)
   const itemsCount=dedup.reduce((a,o)=>a+(o.items||[]).length,0);
   if(kpis){
+    const filtTxt=[brand!=='all'?brand:null,channel!=='all'?channel:null].filter(Boolean).join(' · ')||st;
     kpis.innerHTML=`
       <div class="card card-p" style="border-top:3px solid var(--green)"><div class="kc-lbl">Faturamento</div><div class="kc-val">${fmtBRL(total)}</div><div class="kc-sub pos">${dedup.length} pedidos</div></div>
-      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(dedup.length)}</div><div class="kc-sub" style="color:var(--blue)">filtro: ${st}</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(dedup.length)}</div><div class="kc-sub" style="color:var(--blue)">${filtTxt}</div></div>
       <div class="card card-p" style="border-top:3px solid var(--ora)"><div class="kc-lbl">Ticket Médio</div><div class="kc-val">${fmtBRL(tkt)}</div><div class="kc-sub neu">por pedido</div></div>
       <div class="card card-p" style="border-top:3px solid var(--pur)"><div class="kc-lbl">Itens Vendidos</div><div class="kc-val">${fmtN(itemsCount)}</div><div class="kc-sub pur">unidades</div></div>`;
   }
