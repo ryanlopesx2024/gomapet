@@ -65,7 +65,7 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
   const concurrency = 6;
   const fetchPage = async (page: number) => {
     const params = new URLSearchParams({
-      include: "items,status",
+      include: "items.sku.product,status",
       date: `created_at:${since}|${until}`,
       limit: String(limit),
       page: String(page),
