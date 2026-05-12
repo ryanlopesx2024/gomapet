@@ -3081,9 +3081,9 @@ function applyMetaData(data){
   if(campaigns&&campaigns.length){
     D.camps=campaigns.slice(0,5).map(c=>({
       n:c.n, inv:Math.round(c.inv), rev:Math.round(c.rev),
-      roas:c.roas, cpa:Math.round(c.cpa), ctr:c.ctr
+      roas:c.roas, cpa:Math.round(c.cpa), ctr:c.ctr, alert: !!c.alert
     }));
-    while(D.camps.length<5) D.camps.push({n:'Sem dados',inv:0,rev:0,roas:0,cpa:0,ctr:0});
+    while(D.camps.length<5) D.camps.push({n:'Sem dados',inv:0,rev:0,roas:0,cpa:0,ctr:0,alert:false});
   }
 
   // ── Daily data ────────────────────────────────────────────────────
