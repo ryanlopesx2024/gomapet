@@ -2970,6 +2970,8 @@ function renderYampi(){
 document.addEventListener('change',e=>{
   if(e.target.id==='ympPeriod'){window.YMP.period=e.target.value;loadYampiData(true);}
   if(e.target.id==='ympStatus'){window.YMP.status=e.target.value;renderYampi();}
+  if(e.target.id==='ympBrand'){window.YMP.brand=e.target.value;renderYampi();}
+  if(e.target.id==='ympChannel'){window.YMP.channel=e.target.value;renderYampi();}
 });
 document.addEventListener('click',e=>{
   if(e.target.closest&&e.target.closest('#ympRefresh')){loadYampiData(true);}
