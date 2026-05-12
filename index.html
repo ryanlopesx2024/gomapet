@@ -2161,76 +2161,8 @@ function renderTrafego(){
     }
   }
 
-  if(CH.scatter)return;
+  // (blocos Investimento vs Receita / Radar / CTR×CPA removidos)
 
-  // Scatter (invest vs receita, bubble size = CPA)
-  const cs=document.getElementById('cScatter')?.getContext('2d');
-  if(cs){
-    CH.scatter=new Chart(cs,{type:'bubble',data:{
-      datasets:D.camps.map((camp,i)=>({
-        label:camp.n,
-        data:[{x:camp.inv/1000,y:camp.rev/1000,r:Math.sqrt(camp.cpa)*1.8}],
-        backgroundColor:campColors[i]+'99',borderColor:campColors[i],borderWidth:2
-      }))
-    },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
-      plugins:{legend:{display:false},
-        tooltip:TT({callbacks:{label:x=>`${x.dataset.label}: inv ${window.CUR_SYM||'R$'}${(x.parsed.x).toFixed(0)}K · rev ${window.CUR_SYM||'R$'}${(x.parsed.y).toFixed(0)}K`}})},
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}},
-        y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}}
-      }}});
-  }
-
-  // Radar
-  const cr=document.getElementById('cRadar')?.getContext('2d');
-  if(cr){
-    CH.radar=new Chart(cr,{type:'radar',data:{
-      labels:['ROAS','CTR','Receita','CPA inv.','Eficiência'],
-      datasets:D.camps.slice(0,3).map((camp,i)=>{
-        const maxRoas=5,maxCtr=5,maxRev=100000,maxCpa=60;
-        return{
-          label:camp.n,
-          data:[
-            (camp.roas/maxRoas)*100,
-            (camp.ctr/maxCtr)*100,
-            (camp.rev/maxRev)*100,
-            (1-camp.cpa/maxCpa)*100,
-            (camp.rev/camp.inv/6)*100
-          ],
-          borderColor:campColors[i],backgroundColor:campColors[i]+'22',borderWidth:2,pointRadius:3,
-          pointBackgroundColor:campColors[i]
-        };})
-    },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
-      plugins:{legend:{display:true,position:'bottom',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
-        tooltip:TT()},
-      scales:{r:{grid:{color:'rgba(255,255,255,.05)'},angleLines:{color:'rgba(255,255,255,.05)'},
-        ticks:{display:false},pointLabels:{color:'#6060a0',font:{family:'Inter',size:10}}}}}});
-  }
-
-  // CTR + CPA horizontal
-  const cc=document.getElementById('cCtrCpa')?.getContext('2d');
-  if(cc){
-    CH.ctrCpa=new Chart(cc,{type:'bar',data:{
-      labels:D.camps.map(c=>c.n),
-      datasets:[
-        {label:'CTR (%)',data:D.camps.map(c=>c.ctr),backgroundColor:'rgba(91,156,246,.7)',borderColor:'#5b9cf6',borderWidth:1,borderRadius:5,yAxisID:'yCtr'},
-        {label:'CPA ('+(window.CUR_SYM||'R$')+')',data:D.camps.map(c=>c.cpa),backgroundColor:'rgba(232,68,85,.7)',borderColor:'#e84455',borderWidth:1,borderRadius:5,yAxisID:'yCpa'}
-      ]
-    },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
-      plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
-        tooltip:TT()},
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'Inter',size:10}}},
-        yCtr:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},position:'left',
-          ticks:{color:'#5b9cf6',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}},
-        yCpa:{grid:{display:false},border:{color:'transparent'},position:'right',
-          ticks:{color:'#e84455',font:{family:'JetBrains Mono',size:10},callback:v=>(window.CUR_SYM||'R$')+v}}
-      }}});
-  }
 }
 
 /* ═══ RENDER: FUNIL WHATSAPP ═══════════════════════════════ */
