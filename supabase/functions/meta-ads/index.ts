@@ -139,6 +139,52 @@ async function buildPayload(accountId: string) {
     (camp as any).seg = segmentCamp(raw.campaign_name||"");
   }
 
+  // ── CPA alert flag (cpa > 1.8x média e spend >= 30) ───────────────
+  const cpaMedio = totalPurchases ? totalSpend / totalPurchases : 0;
+  for (const camp of campaigns) {
+    (camp as any).alert = !!(cpaMedio && camp.inv >= 30 && camp.cpa > cpaMedio * 1.8);
+  }
+  const alerts = campaigns.filter((c:any)=>c.alert).slice(0,5).map((c:any)=>({n:c.n,cpa:c.cpa,roas:c.roas,inv:c.inv}));
+
+  // ── Criativos (level=ad) ──────────────────────────────────────────
+  let ads: any[] = [];
+  try {
+    const adsRaw = (await metaGet(`${act}/insights`, {
+      time_range: TIME_RANGE, level: "ad",
+      fields: "ad_id,ad_name,campaign_name,spend,impressions,clicks,ctr,actions,action_values",
+      limit: 50,
+    })).data;
+    const adList = adsRaw.map((a: any) => {
+      const spend = parseFloat(a.spend||0);
+      const conv = findAction(a.actions, PURCHASE_TYPES);
+      const rev = findAction(a.action_values, new Set(["omni_purchase","onsite_web_app_purchase","purchase"]));
+      return {
+        id: a.ad_id,
+        n: cleanName(a.ad_name||"Anúncio"),
+        camp: cleanName(a.campaign_name||""),
+        inv: +spend.toFixed(2),
+        rev: +rev.toFixed(2),
+        roas: spend ? +(rev/spend).toFixed(2) : 0,
+        cpa: conv ? +(spend/conv).toFixed(2) : 0,
+        ctr: +parseFloat(a.ctr||0).toFixed(2),
+        conv: Math.floor(conv),
+        link: null as string | null,
+      };
+    }).sort((a:any,b:any)=>b.rev-a.rev).slice(0,15);
+    // Best-effort: buscar permalink em paralelo
+    await Promise.all(adList.map(async (a) => {
+      try {
+        const r = await metaGet(a.id, { fields: "preview_shareable_link" });
+        a.link = r.preview_shareable_link || null;
+      } catch (_e) { /* ignore */ }
+    }));
+    // Alerta CPA também nos ads
+    adList.forEach((a:any)=>{ a.alert = !!(cpaMedio && a.inv >= 20 && a.cpa > cpaMedio * 1.8); });
+    ads = adList;
+  } catch (e) {
+    console.warn("ads insights failed", e instanceof Error ? e.message : String(e));
+  }
+
   const dailyRaw = (await metaGet(`${act}/insights`, {
     time_range: TIME_RANGE,
     level: "account", time_increment: 1,
@@ -175,6 +221,8 @@ async function buildPayload(accountId: string) {
       recontact_pool: recontactPool, total_msgs: Math.floor(msgConn), avg_pur_day: avgPurDay,
     },
     campaigns: campaigns.slice(0,10),
+    ads,
+    alerts,
     segments, daily, whatsapp_funnel,
     fetched_at: Math.floor(Date.now()/1000),
   };

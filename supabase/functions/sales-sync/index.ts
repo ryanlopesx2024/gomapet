@@ -25,6 +25,24 @@ function isPaidStatus(status: unknown): boolean {
   return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
 }
 
+function classifyBrand(name: string): "gomapet" | "bafisco" | "outro" {
+  const n = (name || "").toLowerCase();
+  if (/bafisco/.test(n)) return "bafisco";
+  if (/gomapet|goma\s*pet|escova/.test(n)) return "gomapet";
+  return "outro";
+}
+
+function classifyChannel(name: string): "whatsapp" | "direto" {
+  const n = (name || "").toLowerCase();
+  if (/whats|wpp|whatsapp/.test(n)) return "whatsapp";
+  return "direto";
+}
+
+function isOrderBump(name: string): boolean {
+  const n = (name || "").toLowerCase();
+  return /frete\s*expresso|order\s*bump|orderbump|bump/.test(n);
+}
+
 async function fetchYampi(since: string, until: string, summaryOnly = false) {
   if (!YAMPI_ALIAS || !YAMPI_TOKEN || !YAMPI_SECRET) {
     return { ok: false, configured: false, orders: [], total: 0, count: 0 };
@@ -42,12 +60,12 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
     "Content-Type": "application/json",
   };
   const all: any[] = [];
-  const limit = 100; // máximo permitido pela Yampi
-  const maxPages = 40; // até 4000 pedidos por chamada
+  const limit = 100;
+  const maxPages = 40;
   const concurrency = 6;
   const fetchPage = async (page: number) => {
     const params = new URLSearchParams({
-      include: "items,status",
+      include: "items.sku.product,status",
       date: `created_at:${since}|${until}`,
       limit: String(limit),
       page: String(page),
@@ -71,30 +89,77 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
     if (stop) break;
     page += pages.length;
   }
-  const orders = all.map((o: any) => ({
-    id: o.id,
-    total: parseFloat(o.value_total || 0),
-    status: o.status?.data?.alias || o.status_alias || "",
-    created: o.created_at,
-    items: (o.items?.data || []).map((it: any) => ({
-      name: it.item_title || it.sku_title || it.title || it.name || `SKU ${it.sku_id || ""}`,
-      qty: it.quantity ?? it.qty ?? 1,
-      price: parseFloat(it.price || it.unit_price || 0),
-    })),
-  })).filter((o: any) => {
+  const orders = all.map((o: any) => {
+    const items = (o.items?.data || []).map((it: any) => {
+      const prodName = it.sku?.data?.product?.data?.name || it.sku?.data?.title;
+      const name = prodName || it.item_title || it.sku_title || it.title || it.name || `SKU ${it.sku_id || ""}`;
+      return {
+        name,
+        qty: it.quantity ?? it.qty ?? 1,
+        price: parseFloat(it.price || it.unit_price || 0),
+        brand: classifyBrand(name),
+        channel: classifyChannel(name),
+        bump: isOrderBump(name),
+      };
+    });
+    // canal do pedido = qualquer item whatsapp → whatsapp; senão direto
+    const channel = items.some((it: any) => it.channel === "whatsapp") ? "whatsapp" : "direto";
+    return {
+      id: o.id,
+      total: parseFloat(o.value_total || 0),
+      status: o.status?.data?.alias || o.status_alias || "",
+      created: o.created_at,
+      channel,
+      items,
+    };
+  }).filter((o: any) => {
     const dt = orderDate(o.created);
     return !dt || (dt >= since && dt <= until);
   });
   const paidOrders = orders.filter((o: any) => isPaidStatus(o.status));
   const total = paidOrders.reduce((a: number, o: any) => a + o.total, 0);
-  const byName: Record<string, { n: string; conv: number; rev: number }> = {};
-  paidOrders.forEach((o: any) => (o.items || []).forEach((it: any) => {
-    const n = String(it.name || "Sem nome").trim();
-    if (!byName[n]) byName[n] = { n, conv: 0, rev: 0 };
-    byName[n].conv += it.qty || 1;
-    byName[n].rev += (it.price || 0) * (it.qty || 1);
-  }));
-  const data = { ok: true, configured: true, orders: summaryOnly ? [] : orders, total, count: orders.length, paidCount: paidOrders.length, summary: { byName: Object.values(byName).sort((a, b) => b.conv - a.conv) }, cached: false };
+
+  const byName: Record<string, { n: string; conv: number; rev: number; brand: string; channel: string }> = {};
+  const byBrand: Record<string, { rev: number; conv: number }> = { gomapet: { rev: 0, conv: 0 }, bafisco: { rev: 0, conv: 0 }, outro: { rev: 0, conv: 0 } };
+  const byChannel: Record<string, { rev: number; conv: number; orders: number }> = { whatsapp: { rev: 0, conv: 0, orders: 0 }, direto: { rev: 0, conv: 0, orders: 0 } };
+  const orderBump = { rev: 0, conv: 0 };
+
+  paidOrders.forEach((o: any) => {
+    byChannel[o.channel].orders += 1;
+    byChannel[o.channel].rev += o.total;
+    (o.items || []).forEach((it: any) => {
+      const n = String(it.name || "Sem nome").trim();
+      const lineRev = (it.price || 0) * (it.qty || 1);
+      const qty = it.qty || 1;
+      if (!byName[n]) byName[n] = { n, conv: 0, rev: 0, brand: it.brand, channel: it.channel };
+      byName[n].conv += qty;
+      byName[n].rev += lineRev;
+      if (it.bump) {
+        orderBump.rev += lineRev;
+        orderBump.conv += qty;
+      } else {
+        byBrand[it.brand].rev += lineRev;
+        byBrand[it.brand].conv += qty;
+      }
+      byChannel[it.channel].conv += qty;
+    });
+  });
+
+  const data = {
+    ok: true,
+    configured: true,
+    orders: summaryOnly ? [] : orders,
+    total,
+    count: orders.length,
+    paidCount: paidOrders.length,
+    summary: {
+      byName: Object.values(byName).sort((a, b) => b.conv - a.conv),
+      byBrand,
+      byChannel,
+      orderBump,
+    },
+    cached: false,
+  };
   YAMPI_CACHE.set(cacheKey, { expires: Date.now() + 55_000, data });
   return data;
   })();
@@ -110,7 +175,6 @@ async function fetchPayt(since: string, until: string) {
   if (!PAYT_KEY) {
     return { ok: false, configured: false, orders: [], total: 0, count: 0 };
   }
-  // Endpoint placeholder — ajustar conforme docs Payt assim que credencial chegar
   const url = `https://api.payt.com.br/v1/orders?from=${since}&to=${until}&limit=200`;
   const r = await fetch(url, {
     headers: { Authorization: `Bearer ${PAYT_KEY}`, "Content-Type": "application/json" },
@@ -137,7 +201,7 @@ Deno.serve(async (req) => {
     const d30 = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
     const since = url.searchParams.get("since") || d30;
     const until = url.searchParams.get("until") || today;
-    const src = url.searchParams.get("source"); // yampi | payt | (all)
+    const src = url.searchParams.get("source");
     const summaryOnly = url.searchParams.get("summary") === "1";
 
     const out: any = { ok: true, since, until };

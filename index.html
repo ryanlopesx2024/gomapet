@@ -639,7 +639,7 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         <div class="g2">
           <div>
             <div class="sec-title">Faturamento — Produto Principal vs Upsell</div>
-            <div class="g2" id="v-prod-vs-upsell"></div>
+            <div class="g3" id="v-prod-vs-upsell"></div>
           </div>
           <div>
             <div class="sec-title">Ranking de Vendas por Kit</div>
@@ -867,26 +867,14 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
         <div class="sec-title">Campanhas Ativas</div>
         <div class="g5" id="camp-cards"></div>
       </div>
+      <!-- Criativos (ads) -->
       <div class="sec" style="padding-top:0">
-        <div class="g2">
-          <div>
-            <div class="sec-title">Invest. vs Receita — Bolha = CPA</div>
-            <div class="card card-p" style="position:relative">
-              <div class="cw" style="height:210px"><canvas id="cScatter"></canvas></div>
-            </div>
-          </div>
-          <div>
-            <div class="sec-title">Radar de Performance por Campanha</div>
-            <div class="card card-p">
-              <div class="cw" style="height:210px"><canvas id="cRadar"></canvas></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="sec" style="padding-top:0">
-        <div class="sec-title">CTR × CPA por Campanha</div>
-        <div class="card card-p">
-          <div class="cw" style="height:140px"><canvas id="cCtrCpa"></canvas></div>
+        <div class="sec-title">Criativos · Top 15 por Receita</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <table class="t" style="width:100%">
+            <thead><tr><th>#</th><th>Criativo</th><th>Campanha</th><th>Inv.</th><th>Receita</th><th>ROAS</th><th>CPA</th><th>CTR</th><th>Conv.</th><th>Link</th></tr></thead>
+            <tbody id="ads-tbody"><tr><td colspan="10" style="text-align:center;padding:14px;color:var(--g1)">Aguardando dados…</td></tr></tbody>
+          </table>
         </div>
       </div>
 
@@ -1249,6 +1237,16 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
               <option value="all">Todos os status</option>
               <option value="waiting_payment">Aguardando pagto</option>
               <option value="canceled">Cancelados</option>
+            </select>
+            <select id="ympBrand" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
+              <option value="all">Todas as marcas</option>
+              <option value="gomapet">Gomapet</option>
+              <option value="bafisco">Bafisco</option>
+            </select>
+            <select id="ympChannel" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
+              <option value="all">Todos os canais</option>
+              <option value="direto">Direto</option>
+              <option value="whatsapp">WhatsApp</option>
             </select>
             <button class="meta-btn" id="ympRefresh" style="width:auto;padding:6px 14px;font-size:12px"><i class="fas fa-sync"></i> Atualizar</button>
           </div>
@@ -1848,7 +1846,18 @@ function renderVendas(){
     mainRev=Math.max(totalRev-upRev,0);
     mainConv=Math.max((c.orders||0)-upConv,0);
   }
+  // OrderBump (Frete Expresso) vindo do backend
+  const ob=window.SALES?.yampi?.summary?.orderBump||{rev:0,conv:0};
+  // Marca: prefere dado do backend se houver
+  const bb=window.SALES?.yampi?.summary?.byBrand;
+  if(bb){
+    mainRev=bb.gomapet?.rev||mainRev;
+    mainConv=bb.gomapet?.conv||mainConv;
+    upRev=bb.bafisco?.rev||upRev;
+    upConv=bb.bafisco?.conv||upConv;
+  }
   const upPctOfMain=mainConv>0?Math.round(upConv/mainConv*100):0;
+  const obPctOfMain=mainConv>0?Math.round(ob.conv/mainConv*100):0;
   const elPU=document.getElementById('v-prod-vs-upsell');
   if(elPU){
     elPU.innerHTML=`
@@ -1858,9 +1867,14 @@ function renderVendas(){
         <div class="kc-sub" style="color:var(--blue)">${fmtN(mainConv)} compras</div>
       </div>
       <div class="card card-p" style="border-top:3px solid var(--ora)">
-        <div class="kc-lbl">Faturamento Upsell</div>
+        <div class="kc-lbl">Faturamento Upsell — Bafisco</div>
         <div class="kc-val">${fmtBRL(upRev)}</div>
-        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% de upsell sobre principal · ${fmtN(upConv)} vendas</div>
+        <div class="kc-sub" style="color:var(--ora);font-weight:700">${upPctOfMain}% sobre principal · ${fmtN(upConv)} vendas</div>
+      </div>
+      <div class="card card-p" style="border-top:3px solid var(--green)">
+        <div class="kc-lbl">OrderBump — Frete Expresso</div>
+        <div class="kc-val">${fmtBRL(ob.rev||0)}</div>
+        <div class="kc-sub" style="color:var(--green);font-weight:700">${obPctOfMain}% sobre principal · ${fmtN(ob.conv||0)} adesões</div>
       </div>`;
   }
 
@@ -2108,10 +2122,15 @@ function renderTrafego(){
     const cpaO=c.cpa||Math.round(inv/(orders||1));
     const ctrO=D.ctr||(D.camps.reduce((a,cp)=>a+cp.ctr,0)/Math.max(D.camps.length,1));
     const roasSub=roasO>=4?'pos':roasO>=3?'warn':'neg';
+    const sym=window.CUR_SYM||'R$';
+    const fx=window.USD_BRL||0;
+    const invBRL=(sym==='$'&&fx)?inv*fx:(sym==='R$'?inv:0);
+    const fxLine=fx?`<div class="kc-sub" style="color:var(--g1);font-size:9px">USD 1 = R$ ${fx.toFixed(2)}</div>`:'';
+    const invSub=(sym==='$'&&fx)?`<div class="kc-sub" style="color:var(--green);font-weight:700;font-size:10px">≈ R$ ${new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(invBRL)}</div>${fxLine}`:fxLine;
     trafKpis.innerHTML=`
       <div class="card card-p" style="border-left:3px solid var(--green)">
         <div class="kc-lbl">Invest. Total</div><div class="kc-val">${fmtK(inv)}</div>
-        <div class="kc-sub neu">${D.camps.length} campanhas</div></div>
+        <div class="kc-sub neu">${D.camps.length} campanhas</div>${invSub}</div>
       <div class="card card-p" style="border-left:3px solid var(--blue)">
         <div class="kc-lbl">Receita Total</div><div class="kc-val">${fmtK(rev)}</div>
         <div class="kc-sub pos">período filtrado</div></div>
@@ -2119,20 +2138,45 @@ function renderTrafego(){
         <div class="kc-lbl">ROAS Geral</div><div class="kc-val">${roasO.toFixed(2)}×</div>
         <div class="kc-sub ${roasSub}">${roasO>=4?'saudável':roasO>=3?'atenção':'crítico'}</div></div>
       <div class="card card-p" style="border-left:3px solid var(--red)">
-        <div class="kc-lbl">CPA Médio</div><div class="kc-val">$${cpaO}</div>
+        <div class="kc-lbl">CPA Médio</div><div class="kc-val">${sym}${cpaO}</div>
         <div class="kc-sub neu">${orders?fmtN(orders):'—'} conversões</div></div>
       <div class="card card-p" style="border-left:3px solid var(--pur)">
         <div class="kc-lbl">CTR Médio</div><div class="kc-val">${ctrO.toFixed(2)}%</div>
         <div class="kc-sub neu">${D.impressions?fmtN(D.impressions)+' impr.':'todas campanhas'}</div></div>`;
   }
 
+  // Banner de alertas (CPA alto)
+  const alertsArr=(window.META&&META.lastData&&META.lastData.alerts)||[];
+  let alertBanner=document.getElementById('cpa-alert-banner');
+  if(!alertBanner){
+    const sec=document.querySelector('#pg-trafego .sec');
+    if(sec){
+      alertBanner=document.createElement('div');
+      alertBanner.id='cpa-alert-banner';
+      alertBanner.style.cssText='margin-top:10px';
+      sec.appendChild(alertBanner);
+    }
+  }
+  if(alertBanner){
+    if(alertsArr.length){
+      const sym=window.CUR_SYM||'R$';
+      alertBanner.innerHTML=`<div class="card card-p" style="border-left:3px solid var(--red);background:rgba(232,68,85,.08)">
+        <div style="font-weight:700;color:var(--red);font-size:12px;margin-bottom:6px"><i class="fas fa-triangle-exclamation"></i> ${alertsArr.length} campanha(s) com CPA alto</div>
+        <div style="font-size:11px;color:var(--w);display:flex;gap:14px;flex-wrap:wrap">
+          ${alertsArr.map(a=>`<span><b>${a.n}</b> · CPA ${sym}${a.cpa} · ROAS ${a.roas}×</span>`).join('')}
+        </div></div>`;
+    } else { alertBanner.innerHTML=''; }
+  }
+
+
   // Campaign cards
   document.getElementById('camp-cards').innerHTML=D.camps.map((camp,i)=>{
     const cls=camp.roas>=4.5?'rb-hi':camp.roas>=3.5?'rb-mid':'rb-lo';
     const col=campColors[i];
-    return`<div class="camp-card" style="border-top:3px solid ${col}">
+    const alertBadge=camp.alert?`<span style="display:inline-block;margin-top:4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px"><i class="fas fa-triangle-exclamation"></i> CPA alto</span>`:'';
+    return`<div class="camp-card" style="border-top:3px solid ${col};${camp.alert?'box-shadow:0 0 0 1px var(--red) inset':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-        <div class="camp-name" style="color:${col}">${camp.n}</div>
+        <div class="camp-name" style="color:${col}">${camp.n}${alertBadge}</div>
         <span class="rb ${cls}">${camp.roas.toFixed(1)}×</span>
       </div>
       <div class="camp-metric"><span class="camp-m-lbl">Invest.</span><span class="camp-m-val">${fmtBRL(camp.inv)}</span></div>
@@ -2140,6 +2184,33 @@ function renderTrafego(){
       <div class="camp-metric"><span class="camp-m-lbl">CPA</span><span class="camp-m-val">${window.CUR_SYM||'R$'}${camp.cpa}</span></div>
       <div class="camp-metric"><span class="camp-m-lbl">CTR</span><span class="camp-m-val">${camp.ctr}%</span></div>
     </div>`;}).join('');
+
+  // Render Criativos (ads)
+  const adsTb=document.getElementById('ads-tbody');
+  const adsList=(window.META&&META.lastData&&META.lastData.ads)||[];
+  if(adsTb){
+    if(adsList.length){
+      const sym=window.CUR_SYM||'R$';
+      adsTb.innerHTML=adsList.map((a,i)=>{
+        const linkBtn=a.link?`<a href="${a.link}" target="_blank" style="color:var(--blue);font-size:11px"><i class="fas fa-up-right-from-square"></i></a>`:'—';
+        const alertTag=a.alert?` <span style="background:var(--red);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:5px;margin-left:4px">CPA↑</span>`:'';
+        return `<tr>
+          <td><span class="lbrank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span></td>
+          <td style="font-weight:600;font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.n}${alertTag}</td>
+          <td style="font-size:10px;color:var(--g1)">${a.camp||'—'}</td>
+          <td class="mono">${sym}${fmtN(Math.round(a.inv))}</td>
+          <td class="mono" style="font-weight:700;color:var(--green)">${sym}${fmtN(Math.round(a.rev))}</td>
+          <td class="mono" style="color:var(--ora)">${a.roas}×</td>
+          <td class="mono">${sym}${a.cpa}</td>
+          <td class="mono">${a.ctr}%</td>
+          <td class="mono">${a.conv}</td>
+          <td>${linkBtn}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      adsTb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--g1)">Sem dados de criativos.</td></tr>';
+    }
+  }
 
   if(typeof Chart==='undefined')return;
 
@@ -2173,76 +2244,8 @@ function renderTrafego(){
     }
   }
 
-  if(CH.scatter)return;
+  // (blocos Investimento vs Receita / Radar / CTR×CPA removidos)
 
-  // Scatter (invest vs receita, bubble size = CPA)
-  const cs=document.getElementById('cScatter')?.getContext('2d');
-  if(cs){
-    CH.scatter=new Chart(cs,{type:'bubble',data:{
-      datasets:D.camps.map((camp,i)=>({
-        label:camp.n,
-        data:[{x:camp.inv/1000,y:camp.rev/1000,r:Math.sqrt(camp.cpa)*1.8}],
-        backgroundColor:campColors[i]+'99',borderColor:campColors[i],borderWidth:2
-      }))
-    },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
-      plugins:{legend:{display:false},
-        tooltip:TT({callbacks:{label:x=>`${x.dataset.label}: inv ${window.CUR_SYM||'R$'}${(x.parsed.x).toFixed(0)}K · rev ${window.CUR_SYM||'R$'}${(x.parsed.y).toFixed(0)}K`}})},
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Investimento ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}},
-        y:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},
-          ticks:{color:'#cfe0d2',font:{family:'JetBrains Mono',size:10},callback:v=>v+'K'},
-          title:{display:true,text:'Receita ('+(window.CUR_SYM||'R$')+' mil)',color:'#cfe0d2',font:{size:10}}}
-      }}});
-  }
-
-  // Radar
-  const cr=document.getElementById('cRadar')?.getContext('2d');
-  if(cr){
-    CH.radar=new Chart(cr,{type:'radar',data:{
-      labels:['ROAS','CTR','Receita','CPA inv.','Eficiência'],
-      datasets:D.camps.slice(0,3).map((camp,i)=>{
-        const maxRoas=5,maxCtr=5,maxRev=100000,maxCpa=60;
-        return{
-          label:camp.n,
-          data:[
-            (camp.roas/maxRoas)*100,
-            (camp.ctr/maxCtr)*100,
-            (camp.rev/maxRev)*100,
-            (1-camp.cpa/maxCpa)*100,
-            (camp.rev/camp.inv/6)*100
-          ],
-          borderColor:campColors[i],backgroundColor:campColors[i]+'22',borderWidth:2,pointRadius:3,
-          pointBackgroundColor:campColors[i]
-        };})
-    },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
-      plugins:{legend:{display:true,position:'bottom',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
-        tooltip:TT()},
-      scales:{r:{grid:{color:'rgba(255,255,255,.05)'},angleLines:{color:'rgba(255,255,255,.05)'},
-        ticks:{display:false},pointLabels:{color:'#6060a0',font:{family:'Inter',size:10}}}}}});
-  }
-
-  // CTR + CPA horizontal
-  const cc=document.getElementById('cCtrCpa')?.getContext('2d');
-  if(cc){
-    CH.ctrCpa=new Chart(cc,{type:'bar',data:{
-      labels:D.camps.map(c=>c.n),
-      datasets:[
-        {label:'CTR (%)',data:D.camps.map(c=>c.ctr),backgroundColor:'rgba(91,156,246,.7)',borderColor:'#5b9cf6',borderWidth:1,borderRadius:5,yAxisID:'yCtr'},
-        {label:'CPA ('+(window.CUR_SYM||'R$')+')',data:D.camps.map(c=>c.cpa),backgroundColor:'rgba(232,68,85,.7)',borderColor:'#e84455',borderWidth:1,borderRadius:5,yAxisID:'yCpa'}
-      ]
-    },options:{responsive:true,maintainAspectRatio:false,animation:{duration:600},
-      plugins:{legend:{display:true,position:'top',labels:{color:'#6060a0',font:{family:'Inter',size:10},usePointStyle:true,padding:10}},
-        tooltip:TT()},
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},ticks:{color:'#cfe0d2',font:{family:'Inter',size:10}}},
-        yCtr:{grid:{color:'rgba(255,255,255,.03)'},border:{color:'transparent'},position:'left',
-          ticks:{color:'#5b9cf6',font:{family:'JetBrains Mono',size:10},callback:v=>v+'%'}},
-        yCpa:{grid:{display:false},border:{color:'transparent'},position:'right',
-          ticks:{color:'#e84455',font:{family:'JetBrains Mono',size:10},callback:v=>(window.CUR_SYM||'R$')+v}}
-      }}});
-  }
 }
 
 /* ═══ RENDER: FUNIL WHATSAPP ═══════════════════════════════ */
@@ -2845,7 +2848,7 @@ function renderAlertas(){
 }
 
 /* ═══ YAMPI PAGE ═════════════════════════════════════════════ */
-window.YMP={data:null,loading:false,period:30,status:'paid'};
+window.YMP={data:null,loading:false,period:30,status:'paid',brand:'all',channel:'all'};
 function isPaidOrderStatus(status){
   const s=(status||'').toString().toLowerCase().trim();
   if(/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s))return false;
@@ -2896,17 +2899,29 @@ function renderYampi(){
     if(st==='canceled')return /cancel|refund|estorn/.test(s);
     return true;
   });
-  // dedupe por id (caso paginação retorne duplicados)
+  // dedupe por id
   const seen=new Set();
-  const dedup=filtered.filter(o=>{if(seen.has(o.id))return false;seen.add(o.id);return true;});
+  let dedup=filtered.filter(o=>{if(seen.has(o.id))return false;seen.add(o.id);return true;});
+  // Filtros marca + canal (atuam por item; pedido entra se ao menos um item bater)
+  const brand=window.YMP.brand||'all';
+  const channel=window.YMP.channel||'all';
+  const matchItem=(it)=>(brand==='all'||it.brand===brand)&&(channel==='all'||it.channel===channel);
+  if(brand!=='all'||channel!=='all'){
+    dedup=dedup.map(o=>{
+      const items=(o.items||[]).filter(matchItem);
+      if(!items.length)return null;
+      const total=items.reduce((a,it)=>a+(it.price||0)*(it.qty||1),0);
+      return {...o,items,total};
+    }).filter(Boolean);
+  }
   const total=dedup.reduce((a,o)=>a+(o.total||0),0);
   const tkt=dedup.length?total/dedup.length:0;
-  // Itens vendidos = nº de linhas de produto (não soma de quantidades)
   const itemsCount=dedup.reduce((a,o)=>a+(o.items||[]).length,0);
   if(kpis){
+    const filtTxt=[brand!=='all'?brand:null,channel!=='all'?channel:null].filter(Boolean).join(' · ')||st;
     kpis.innerHTML=`
       <div class="card card-p" style="border-top:3px solid var(--green)"><div class="kc-lbl">Faturamento</div><div class="kc-val">${fmtBRL(total)}</div><div class="kc-sub pos">${dedup.length} pedidos</div></div>
-      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(dedup.length)}</div><div class="kc-sub" style="color:var(--blue)">filtro: ${st}</div></div>
+      <div class="card card-p" style="border-top:3px solid var(--blue)"><div class="kc-lbl">Pedidos</div><div class="kc-val">${fmtN(dedup.length)}</div><div class="kc-sub" style="color:var(--blue)">${filtTxt}</div></div>
       <div class="card card-p" style="border-top:3px solid var(--ora)"><div class="kc-lbl">Ticket Médio</div><div class="kc-val">${fmtBRL(tkt)}</div><div class="kc-sub neu">por pedido</div></div>
       <div class="card card-p" style="border-top:3px solid var(--pur)"><div class="kc-lbl">Itens Vendidos</div><div class="kc-val">${fmtN(itemsCount)}</div><div class="kc-sub pur">unidades</div></div>`;
   }
@@ -2971,6 +2986,8 @@ function renderYampi(){
 document.addEventListener('change',e=>{
   if(e.target.id==='ympPeriod'){window.YMP.period=e.target.value;loadYampiData(true);}
   if(e.target.id==='ympStatus'){window.YMP.status=e.target.value;renderYampi();}
+  if(e.target.id==='ympBrand'){window.YMP.brand=e.target.value;renderYampi();}
+  if(e.target.id==='ympChannel'){window.YMP.channel=e.target.value;renderYampi();}
 });
 document.addEventListener('click',e=>{
   if(e.target.closest&&e.target.closest('#ympRefresh')){loadYampiData(true);}
@@ -3104,9 +3121,9 @@ function applyMetaData(data){
   if(campaigns&&campaigns.length){
     D.camps=campaigns.slice(0,5).map(c=>({
       n:c.n, inv:Math.round(c.inv), rev:Math.round(c.rev),
-      roas:c.roas, cpa:Math.round(c.cpa), ctr:c.ctr
+      roas:c.roas, cpa:Math.round(c.cpa), ctr:c.ctr, alert: !!c.alert
     }));
-    while(D.camps.length<5) D.camps.push({n:'Sem dados',inv:0,rev:0,roas:0,cpa:0,ctr:0});
+    while(D.camps.length<5) D.camps.push({n:'Sem dados',inv:0,rev:0,roas:0,cpa:0,ctr:0,alert:false});
   }
 
   // ── Daily data ────────────────────────────────────────────────────
@@ -3242,6 +3259,16 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{compute();}catch(e){console.error('Erro ao calcular dados:',e);}
   try{renderVendas();}catch(e){console.error('Erro ao renderizar vendas:',e);}
   try{renderAlertas();}catch(e){console.error('Erro ao renderizar alertas:',e);}
+
+  // USD → BRL (cotação do dia, sem auth)
+  (async()=>{
+    try{
+      const r=await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+      const j=await r.json();
+      const v=parseFloat(j?.USDBRL?.bid||0);
+      if(v>0){window.USD_BRL=v;}
+    }catch(_e){}
+  })();
 
   if(META.accountId){
     const load=async()=>{
