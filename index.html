@@ -1227,10 +1227,14 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <select id="ympPeriod" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
-              <option value="1">Hoje</option>
-              <option value="7">Últimos 7 dias</option>
-              <option value="30" selected>Últimos 30 dias</option>
-              <option value="90">Últimos 90 dias</option>
+              <option value="today">Hoje</option>
+              <option value="yesterday">Ontem</option>
+              <option value="last_7_days">Últimos 7 dias</option>
+              <option value="last_30_days" selected>Últimos 30 dias</option>
+              <option value="last_90_days">Últimos 90 dias</option>
+              <option value="this_month">Este mês</option>
+              <option value="last_month">Mês passado</option>
+              <option value="this_year">Este ano</option>
             </select>
             <select id="ympStatus" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
               <option value="paid">Apenas pagos</option>
@@ -2848,29 +2852,33 @@ function renderAlertas(){
 }
 
 /* ═══ YAMPI PAGE ═════════════════════════════════════════════ */
-window.YMP={data:null,loading:false,period:30,status:'paid',brand:'all',channel:'all'};
+window.YMP={data:null,loading:false,period:'last_30_days',status:'paid',brand:'all',channel:'all'};
 function isPaidOrderStatus(status){
   const s=(status||'').toString().toLowerCase().trim();
   if(/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s))return false;
   return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
 }
 async function loadYampiData(force){
-  if(window.YMP.loading)return;
+  if(window.YMP.loading&&!force)return;
+  const req=(window.YMP.req||0)+1;
+  window.YMP.req=req;
   window.YMP.loading=true;
   try{
     const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
     const SUP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
-    const days=parseInt(window.YMP.period||30,10);
-    const today=new Date();
-    const since=new Date(today.getTime()-(days-1)*86400000).toISOString().slice(0,10);
-    const until=today.toISOString().slice(0,10);
+    const period=window.YMP.period||'last_30_days';
+    const range=typeof window.periodToRange==='function'
+      ? window.periodToRange(period)
+      : (function(){const now=new Date();const today=now.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});return {since:today,until:today};})();
+    const {since,until}=range;
     const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?source=yampi&since=${since}&until=${until}&apikey=${SUP_KEY}`);
     const d=await r.json();
+    if(req!==window.YMP.req)return;
     window.YMP.data=d;
     console.log('[Yampi] loaded',d?.yampi?.count,'orders');
     if(document.getElementById('ymp-kpis'))renderYampi();
   }catch(e){console.warn('yampi load fail',e.message);}
-  finally{window.YMP.loading=false;}
+  finally{if(req===window.YMP.req)window.YMP.loading=false;}
 }
 function renderYampi(){
   const d=window.YMP.data;
@@ -2984,7 +2992,12 @@ function renderYampi(){
   }
 }
 document.addEventListener('change',e=>{
-  if(e.target.id==='ympPeriod'){window.YMP.period=e.target.value;loadYampiData(true);}
+  if(e.target.id==='ympPeriod'){
+    window.YMP.period=e.target.value;
+    const d=document.getElementById('dFilter');
+    if(d&&d.value!==e.target.value){d.value=e.target.value;applyFilters(false);}
+    else loadYampiData(true);
+  }
   if(e.target.id==='ympStatus'){window.YMP.status=e.target.value;renderYampi();}
   if(e.target.id==='ympBrand'){window.YMP.brand=e.target.value;renderYampi();}
   if(e.target.id==='ympChannel'){window.YMP.channel=e.target.value;renderYampi();}
@@ -3568,6 +3581,12 @@ function applyFiltersToKPIs(){
 }
 function applyFilters(close){
   const f=getActiveFilters(); window.__filters=f;
+  if(window.YMP&&window.YMP.period!==f.period){
+    window.YMP.period=f.period;
+    const ySel=document.getElementById('ympPeriod');
+    if(ySel)ySel.value=f.period;
+    if(typeof window.loadYampiData==='function')window.loadYampiData(true);
+  }
   const isDefault=f.period==='last_30_days'&&f.channel==='all'&&f.category==='all'&&f.seller==='all'&&f.status==='all';
   window.__filtersActive=!isDefault;
   if(close)document.getElementById('fltPop')?.classList.remove('open');
