@@ -3494,8 +3494,10 @@ function applyFiltersToKPIs(){
   const onlyPeriod=(f.channel==='all'&&f.category==='all'&&f.seller==='all'&&f.status==='all');
   const realSpend=sliced.reduce((a,d)=>a+(d._spend||0),0);
   const realOrders=sliced.reduce((a,d)=>a+(d._pur||0),0);
-  const rev= onlyPeriod ? sumRev : base.rev*m;
-  const orders= onlyPeriod ? realOrders : Math.max(0,Math.round(base.orders*m));
+  // Fonte de verdade para Compras/Faturamento: Yampi+Payt do mesmo período (se já carregado)
+  const salesMatch=(window.SALES_PERIOD===f.period)?window.SALES_TOTALS:null;
+  const rev= salesMatch ? salesMatch.totalPaid : (onlyPeriod ? sumRev : base.rev*m);
+  const orders= salesMatch ? salesMatch.paidCount : (onlyPeriod ? realOrders : Math.max(0,Math.round(base.orders*m)));
   const spend= onlyPeriod ? realSpend*spendFactor : base.spend*m*spendFactor;
   S.comp={
     spend, orders, rev,
