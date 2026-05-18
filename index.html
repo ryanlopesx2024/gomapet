@@ -3573,6 +3573,10 @@ function applyFilters(close){
   if(close)document.getElementById('fltPop')?.classList.remove('open');
   if(!window.__baseSnapshot&&window.S&&S.comp&&S.comp.rev){window.__baseSnapshot={...S.comp};}
   if(!window.__baseD)_snapshotBaseD();
+  // Recarrega Yampi/Payt para o período escolhido — fonte de verdade das vendas
+  if(typeof window.loadSales==='function' && window.SALES_PERIOD!==f.period){
+    window.loadSales(f.period).then(()=>applyFiltersToKPIs());
+  }
   applyFiltersToKPIs();
   renderFilterChips();
   console.log('[filtros]',f,'→ rev:',S.comp?.rev?.toFixed(0));
