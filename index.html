@@ -2852,7 +2852,7 @@ function renderAlertas(){
 }
 
 /* ═══ YAMPI PAGE ═════════════════════════════════════════════ */
-window.YMP={data:null,loading:false,period:30,status:'paid',brand:'all',channel:'all'};
+window.YMP={data:null,loading:false,period:'last_30_days',status:'paid',brand:'all',channel:'all'};
 function isPaidOrderStatus(status){
   const s=(status||'').toString().toLowerCase().trim();
   if(/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s))return false;
@@ -2864,10 +2864,11 @@ async function loadYampiData(force){
   try{
     const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
     const SUP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
-    const days=parseInt(window.YMP.period||30,10);
-    const today=new Date();
-    const since=new Date(today.getTime()-(days-1)*86400000).toISOString().slice(0,10);
-    const until=today.toISOString().slice(0,10);
+    const period=window.YMP.period||'last_30_days';
+    const range=typeof window.periodToRange==='function'
+      ? window.periodToRange(period)
+      : (function(){const now=new Date();const today=now.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});return {since:today,until:today};})();
+    const {since,until}=range;
     const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?source=yampi&since=${since}&until=${until}&apikey=${SUP_KEY}`);
     const d=await r.json();
     window.YMP.data=d;
