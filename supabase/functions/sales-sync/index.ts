@@ -21,8 +21,8 @@ function orderDate(value: unknown): string {
 
 function isPaidStatus(status: unknown): boolean {
   const s = String(status ?? "").toLowerCase().trim();
-  if (/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s)) return false;
-  return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
+  if (/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback|fail/.test(s)) return false;
+  return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago|completed?|complet[oa]|authorized|autorizad[oa]?|invoice[d]?|faturad[oa]?|delivered|entregue|shipped|enviad[oa]?)($|[_\s-])/.test(s);
 }
 
 function classifyBrand(name: string): "gomapet" | "bafisco" | "outro" {
@@ -32,9 +32,9 @@ function classifyBrand(name: string): "gomapet" | "bafisco" | "outro" {
   return "outro";
 }
 
-function classifyChannel(name: string): "whatsapp" | "direto" {
-  const n = (name || "").toLowerCase();
-  if (/whats|wpp|whatsapp/.test(n)) return "whatsapp";
+function classifyChannel(text: string): "whatsapp" | "direto" {
+  const n = (text || "").toLowerCase();
+  if (/whats|wpp|whatsapp|\bwa\b|chat[\s_-]?pro|salesbot|tinybird/.test(n)) return "whatsapp";
   return "direto";
 }
 
