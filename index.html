@@ -2859,7 +2859,9 @@ function isPaidOrderStatus(status){
   return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
 }
 async function loadYampiData(force){
-  if(window.YMP.loading)return;
+  if(window.YMP.loading&&!force)return;
+  const req=(window.YMP.req||0)+1;
+  window.YMP.req=req;
   window.YMP.loading=true;
   try{
     const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
@@ -2871,11 +2873,12 @@ async function loadYampiData(force){
     const {since,until}=range;
     const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?source=yampi&since=${since}&until=${until}&apikey=${SUP_KEY}`);
     const d=await r.json();
+    if(req!==window.YMP.req)return;
     window.YMP.data=d;
     console.log('[Yampi] loaded',d?.yampi?.count,'orders');
     if(document.getElementById('ymp-kpis'))renderYampi();
   }catch(e){console.warn('yampi load fail',e.message);}
-  finally{window.YMP.loading=false;}
+  finally{if(req===window.YMP.req)window.YMP.loading=false;}
 }
 function renderYampi(){
   const d=window.YMP.data;
