@@ -1227,10 +1227,14 @@ window.hideBootLoader=function(){var el=document.getElementById('bootLoader');if
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <select id="ympPeriod" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
-              <option value="1">Hoje</option>
-              <option value="7">Últimos 7 dias</option>
-              <option value="30" selected>Últimos 30 dias</option>
-              <option value="90">Últimos 90 dias</option>
+              <option value="today">Hoje</option>
+              <option value="yesterday">Ontem</option>
+              <option value="last_7_days">Últimos 7 dias</option>
+              <option value="last_30_days" selected>Últimos 30 dias</option>
+              <option value="last_90_days">Últimos 90 dias</option>
+              <option value="this_month">Este mês</option>
+              <option value="last_month">Mês passado</option>
+              <option value="this_year">Este ano</option>
             </select>
             <select id="ympStatus" class="meta-input" style="width:auto;padding:6px 10px;font-size:12px">
               <option value="paid">Apenas pagos</option>
