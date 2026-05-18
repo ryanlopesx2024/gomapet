@@ -2821,7 +2821,7 @@ function renderAlertas(){
   const actionEl=document.getElementById('action-plan');
   if(actionEl){
     const actions=[
-      {pri:'1',col:'var(--red)',icon:'fa-fire',title:'Repor GomaPet 6 potes HOJE',detail:`Apenas ${Math.floor(D.stock[0].u/D.stock[0].d)} dias de estoque. Ligar fornecedor agora.`},
+      {pri:'1',col:'var(--red)',icon:'fa-fire',title:'Repor GomaPet 6 potes HOJE',detail:(D.stock&&D.stock[0]&&D.stock[0].d)?`Apenas ${Math.floor((D.stock[0].u||0)/D.stock[0].d)} dias de estoque. Ligar fornecedor agora.`:'Atualize o estoque para acompanhar reposição.'},
       {pri:'2',col:'var(--ora)',icon:'fa-bullhorn',title:'Recontatar 84 clientes (6 potes) na janela',detail:'Janela ideal 52–55 dias. Taxa de recompra potencial: 52%.'},
       {pri:'3',col:'var(--ora)',icon:'fa-arrow-trend-up',title:'Treinar equipe em script Bafisco',detail:`Taxa ${D.bafisco.rate}% vs meta ${D.bafisco.goal}%. Potencial +R$9K/mês com melhora.`},
       {pri:'4',col:'var(--blue)',icon:'fa-users',title:'Acompanhar vendedores abaixo da meta',detail:`${D.team.filter(p=>p.c<D.teamGoal).map(p=>p.n.split(' ')[0]).join(', ')} — conversão abaixo de ${D.teamGoal}%.`},
