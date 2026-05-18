@@ -3578,6 +3578,12 @@ function applyFiltersToKPIs(){
 }
 function applyFilters(close){
   const f=getActiveFilters(); window.__filters=f;
+  if(window.YMP&&window.YMP.period!==f.period){
+    window.YMP.period=f.period;
+    const ySel=document.getElementById('ympPeriod');
+    if(ySel)ySel.value=f.period;
+    if(typeof window.loadYampiData==='function')window.loadYampiData(true);
+  }
   const isDefault=f.period==='last_30_days'&&f.channel==='all'&&f.category==='all'&&f.seller==='all'&&f.status==='all';
   window.__filtersActive=!isDefault;
   if(close)document.getElementById('fltPop')?.classList.remove('open');
