@@ -154,13 +154,26 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
     });
   });
 
+  // Separar pedidos PAGOS por canal e por marca
+  const paidByChannel: Record<string, any[]> = { whatsapp: [], direto: [] };
+  const paidByBrand: Record<string, any[]> = { gomapet: [], bafisco: [], outro: [] };
+  paidOrders.forEach((o: any) => {
+    (paidByChannel[o.channel] = paidByChannel[o.channel] || []).push(o);
+    const mainBrand = (o.items || []).find((it: any) => !it.bump)?.brand || "outro";
+    (paidByBrand[mainBrand] = paidByBrand[mainBrand] || []).push(o);
+  });
+
   const data = {
     ok: true,
     configured: true,
-    orders: summaryOnly ? [] : orders,
+    // só pedidos PAGOS na lista principal
+    orders: summaryOnly ? [] : paidOrders,
+    allOrdersCount: orders.length,
     total,
-    count: orders.length,
+    count: paidOrders.length,
     paidCount: paidOrders.length,
+    paidByChannel: summaryOnly ? undefined : paidByChannel,
+    paidByBrand: summaryOnly ? undefined : paidByBrand,
     summary: {
       byName: Object.values(byName).sort((a, b) => b.conv - a.conv),
       byBrand,
