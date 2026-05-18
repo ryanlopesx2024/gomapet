@@ -21,8 +21,8 @@ function orderDate(value: unknown): string {
 
 function isPaidStatus(status: unknown): boolean {
   const s = String(status ?? "").toLowerCase().trim();
-  if (/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback/.test(s)) return false;
-  return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago)($|[_\s-])/.test(s);
+  if (/not[_\s-]?paid|unpaid|waiting|pending|aguard|cancel|refund|refus|estorn|chargeback|fail/.test(s)) return false;
+  return /(^|[_\s-])(paid|approved|aprovad[oa]?|pago|completed?|complet[oa]|authorized|autorizad[oa]?|invoice[d]?|faturad[oa]?|delivered|entregue|shipped|enviad[oa]?)($|[_\s-])/.test(s);
 }
 
 function classifyBrand(name: string): "gomapet" | "bafisco" | "outro" {
@@ -32,9 +32,9 @@ function classifyBrand(name: string): "gomapet" | "bafisco" | "outro" {
   return "outro";
 }
 
-function classifyChannel(name: string): "whatsapp" | "direto" {
-  const n = (name || "").toLowerCase();
-  if (/whats|wpp|whatsapp/.test(n)) return "whatsapp";
+function classifyChannel(text: string): "whatsapp" | "direto" {
+  const n = (text || "").toLowerCase();
+  if (/whats|wpp|whatsapp|\bwa\b|chat[\s_-]?pro|salesbot|tinybird/.test(n)) return "whatsapp";
   return "direto";
 }
 
@@ -90,24 +90,33 @@ async function fetchYampi(since: string, until: string, summaryOnly = false) {
     page += pages.length;
   }
   const orders = all.map((o: any) => {
+    // Sinais de canal do pedido inteiro: utm, tracking, source, tags
+    const orderSignals = [
+      o.utm_source, o.utm_medium, o.utm_campaign, o.utm_content, o.utm_term,
+      o.source, o.origin, o.channel,
+      typeof o.tracking === "string" ? o.tracking : (o.tracking?.data ? JSON.stringify(o.tracking.data) : ""),
+      typeof o.tags === "string" ? o.tags : (Array.isArray(o.tags?.data) ? o.tags.data.map((t:any)=>t.name||t).join(" ") : ""),
+      o.observations, o.notes, o.coupon_code, o.coupon,
+    ].filter(Boolean).join(" ");
+    const orderChannelHint = classifyChannel(orderSignals);
     const items = (o.items?.data || []).map((it: any) => {
       const prodName = it.sku?.data?.product?.data?.name || it.sku?.data?.title;
       const name = prodName || it.item_title || it.sku_title || it.title || it.name || `SKU ${it.sku_id || ""}`;
+      const itemChannel = classifyChannel(name);
       return {
         name,
         qty: it.quantity ?? it.qty ?? 1,
         price: parseFloat(it.price || it.unit_price || 0),
         brand: classifyBrand(name),
-        channel: classifyChannel(name),
+        channel: itemChannel === "whatsapp" ? "whatsapp" : orderChannelHint,
         bump: isOrderBump(name),
       };
     });
-    // canal do pedido = qualquer item whatsapp → whatsapp; senão direto
-    const channel = items.some((it: any) => it.channel === "whatsapp") ? "whatsapp" : "direto";
+    const channel = orderChannelHint === "whatsapp" || items.some((it: any) => it.channel === "whatsapp") ? "whatsapp" : "direto";
     return {
       id: o.id,
       total: parseFloat(o.value_total || 0),
-      status: o.status?.data?.alias || o.status_alias || "",
+      status: o.status?.data?.alias || o.status_alias || o.status || "",
       created: o.created_at,
       channel,
       items,

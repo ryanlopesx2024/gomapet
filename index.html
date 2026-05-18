@@ -3315,41 +3315,78 @@ window.addEventListener('DOMContentLoaded',async()=>{
   // ── Yampi/Payt sync (vendas reais) ──────────────────────────────
   const SUP_URL='https://xfgfalglgfamavemedew.supabase.co';
   const SUP_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmZ2ZhbGdsZ2ZhbWF2ZW1lZGV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5NTMyMTYsImV4cCI6MjA5MzUyOTIxNn0.WPgxs0X8Bluf8DDyl0446Im92vBvpNw5wxVj_1aXVBM';
-  async function loadSales(){
+  // Helper: período do filtro -> {since, until} em horário de São Paulo (YYYY-MM-DD)
+  window.periodToRange=function(period){
+    // converte agora para SP
+    const fmt=(d)=>d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); // YYYY-MM-DD
+    const now=new Date();
+    const today=fmt(now);
+    const minus=(days)=>fmt(new Date(now.getTime()-days*86400000));
+    switch(period){
+      case 'today':        return {since:today, until:today};
+      case 'yesterday':    return {since:minus(1), until:minus(1)};
+      case 'last_7_days':  return {since:minus(6), until:today};
+      case 'last_30_days': return {since:minus(29), until:today};
+      case 'last_90_days': return {since:minus(89), until:today};
+      case 'this_month':{
+        const y=now.toLocaleString('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric'});
+        const m=now.toLocaleString('en-CA',{timeZone:'America/Sao_Paulo',month:'2-digit'});
+        return {since:`${y}-${m}-01`, until:today};
+      }
+      case 'last_month':{
+        const d=new Date(now); d.setDate(1); d.setMonth(d.getMonth()-1);
+        const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0');
+        const end=new Date(d.getFullYear(), d.getMonth()+1, 0);
+        return {since:`${y}-${m}-01`, until:fmt(end)};
+      }
+      case 'this_year':{
+        const y=now.toLocaleString('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric'});
+        return {since:`${y}-01-01`, until:today};
+      }
+      default:             return {since:minus(29), until:today};
+    }
+  };
+  async function loadSales(period){
     try{
-      const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?summary=1&apikey=${SUP_KEY}`);
+      const p=period||(window.__filters&&window.__filters.period)||'last_30_days';
+      const {since,until}=window.periodToRange(p);
+      const r=await fetch(`${SUP_URL}/functions/v1/sales-sync?since=${since}&until=${until}&apikey=${SUP_KEY}`);
       const d=await r.json();
       if(!d||!d.ok)return;
       window.SALES=d;
-      const orders=[...(d.yampi?.orders||[]),...(d.payt?.orders||[])];
-      const paid=orders.filter(o=>isPaidOrderStatus(o.status));
+      window.SALES_PERIOD=p;
+      // Totais reais (Yampi pagos + Payt pagos)
       const yPaid=d.yampi?.paidCount||0;
-      const totalPaid=(d.yampi?.total||0)+paid.reduce((a,o)=>a+(o.total||0),0);
-      const paidCount=yPaid+paid.length;
+      const yTotal=d.yampi?.total||0;
+      const paytOrders=(d.payt?.orders||[]).filter(o=>isPaidOrderStatus(o.status));
+      const paytTotal=paytOrders.reduce((a,o)=>a+(o.total||0),0);
+      const paidCount=yPaid+paytOrders.length;
+      const totalPaid=yTotal+paytTotal;
+      window.SALES_TOTALS={paidCount,totalPaid};
       if(window.S&&S.comp&&paidCount){
         S.comp.rev=totalPaid;
         S.comp.orders=paidCount;
         S.comp.avgTkt=totalPaid/paidCount;
+        S.comp.profit=totalPaid*((S.comp.margin||38)/100);
       }
-      // Ranking por nome de produto
-      const byName={};
-      paid.forEach(o=>(o.items||[]).forEach(it=>{
-        const n=(it.name||'Sem nome').trim();
-        if(!byName[n])byName[n]={n,conv:0,rev:0};
-        byName[n].conv+=(it.qty||1);
-        byName[n].rev+=(it.price||0)*(it.qty||1);
-      }));
-      window.SALES_BY_NAME=(d.yampi?.summary?.byName||Object.values(byName)).sort((a,b)=>b.conv-a.conv);
+      // Ranking por nome (sempre vem do summary do período)
+      window.SALES_BY_NAME=(d.yampi?.summary?.byName||[]).slice();
       const chip=document.getElementById('salesChip');
+      const labelP={today:'hoje',yesterday:'ontem',last_7_days:'7d',last_30_days:'30d',last_90_days:'90d',this_month:'este mês',last_month:'mês passado',this_year:'ano'}[p]||p;
       if(!chip){
         const hdr=document.querySelector('.hdr-title');
-        if(hdr){const c=document.createElement('span');c.id='salesChip';c.style.cssText='margin-left:10px;font-size:10px;padding:3px 8px;border-radius:10px;background:var(--green);color:#fff;font-weight:700';c.textContent='Yampi LIVE · '+paidCount+' pedidos';hdr.appendChild(c);}
-      } else { chip.textContent='Yampi LIVE · '+paidCount+' pedidos'; }
-      try{if(typeof renderVendas==='function')renderVendas();}catch(_){}
+        if(hdr){const c=document.createElement('span');c.id='salesChip';c.style.cssText='margin-left:10px;font-size:10px;padding:3px 8px;border-radius:10px;background:var(--green);color:#fff;font-weight:700';c.textContent=`Yampi LIVE · ${paidCount} pedidos (${labelP})`;hdr.appendChild(c);}
+      } else { chip.textContent=`Yampi LIVE · ${paidCount} pedidos (${labelP})`; }
+      if(typeof updateKPIs==='function') updateKPIs();
+      try{
+        const curPg=document.querySelector('.page.active');
+        if(curPg){const pg=curPg.id.replace('pg-','');renders[pg]&&renders[pg]();}
+      }catch(_){}
     }catch(e){console.warn('sales-sync falhou:',e.message);}
   }
-  loadSales();
-  setInterval(loadSales,60000);
+  window.loadSales=loadSales;
+  loadSales('last_30_days');
+  setInterval(()=>loadSales((window.__filters&&window.__filters.period)||'last_30_days'),60000);
   setTimeout(populateSellerFilter,500);
   if(window.hideBootLoader)window.hideBootLoader();
 });
@@ -3457,8 +3494,10 @@ function applyFiltersToKPIs(){
   const onlyPeriod=(f.channel==='all'&&f.category==='all'&&f.seller==='all'&&f.status==='all');
   const realSpend=sliced.reduce((a,d)=>a+(d._spend||0),0);
   const realOrders=sliced.reduce((a,d)=>a+(d._pur||0),0);
-  const rev= onlyPeriod ? sumRev : base.rev*m;
-  const orders= onlyPeriod ? realOrders : Math.max(0,Math.round(base.orders*m));
+  // Fonte de verdade para Compras/Faturamento: Yampi+Payt do mesmo período (se já carregado)
+  const salesMatch=(window.SALES_PERIOD===f.period)?window.SALES_TOTALS:null;
+  const rev= salesMatch ? salesMatch.totalPaid : (onlyPeriod ? sumRev : base.rev*m);
+  const orders= salesMatch ? salesMatch.paidCount : (onlyPeriod ? realOrders : Math.max(0,Math.round(base.orders*m)));
   const spend= onlyPeriod ? realSpend*spendFactor : base.spend*m*spendFactor;
   S.comp={
     spend, orders, rev,
@@ -3534,6 +3573,10 @@ function applyFilters(close){
   if(close)document.getElementById('fltPop')?.classList.remove('open');
   if(!window.__baseSnapshot&&window.S&&S.comp&&S.comp.rev){window.__baseSnapshot={...S.comp};}
   if(!window.__baseD)_snapshotBaseD();
+  // Recarrega Yampi/Payt para o período escolhido — fonte de verdade das vendas
+  if(typeof window.loadSales==='function' && window.SALES_PERIOD!==f.period){
+    window.loadSales(f.period).then(()=>applyFiltersToKPIs());
+  }
   applyFiltersToKPIs();
   renderFilterChips();
   console.log('[filtros]',f,'→ rev:',S.comp?.rev?.toFixed(0));
