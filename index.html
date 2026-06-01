@@ -3268,6 +3268,11 @@ function toast(title,msg,type='ok'){
 
 /* ═══ BOOT ══════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',async()=>{
+  const onAuthRoute=document.documentElement.classList.contains('auth-route') || ['/auth','/reset-password'].includes(window.location.pathname);
+  if(onAuthRoute){
+    if(window.hideBootLoader)window.hideBootLoader();
+    return;
+  }
   try{startClock();}catch(e){console.error('Erro ao iniciar relógio:',e);}
   try{compute();}catch(e){console.error('Erro ao calcular dados:',e);}
   try{renderVendas();}catch(e){console.error('Erro ao renderizar vendas:',e);}
